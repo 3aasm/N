@@ -152,19 +152,24 @@
 
         /* Sub-page transition classes */
         .subpage {
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
+            right: 0;
+            margin: 0 auto;
             width: 100%;
             height: 100%;
-            transform: translateX(-100%);
+            transform: translateY(100%);
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 40;
-            background: inherit;
+            z-index: 50;
+            background: #1f2937;
+            /* Solid background for standalone page look */
+            max-width: 56rem;
+            /* Tailwind max-w-4xl */
         }
 
         .subpage.active {
-            transform: translateX(0);
+            transform: translateY(0);
         }
     </style>
 </head>
@@ -224,7 +229,7 @@
             </div>
         </header>
 
-        <div class="flex-1 overflow-y-auto hide-scrollbar smooth-scroll px-6 pb-32 z-10 w-full relative">
+        <div class="flex-1 overflow-hidden hide-scrollbar px-6 pb-32 z-10 w-full relative">
 
             <!-- VIEW: DASHBOARD -->
             <div id="view-dashboard" class="view-section block pt-2">
@@ -417,7 +422,7 @@
 
     <!-- SUBPAGE: Wallpaper Settings -->
     <div id="subpage-wallpaper-settings"
-        class="subpage bg-gray-900/40 backdrop-blur-2xl px-6 pb-32 pt-10 w-full max-w-4xl mx-auto sm:border-x sm:border-white/10 overflow-y-auto">
+        class="subpage px-6 pb-32 pt-10 sm:border-x sm:border-white/10 overflow-y-auto">
         <div class="flex items-center gap-4 mb-8">
             <button onclick="closeSubpage('wallpaper-settings')"
                 class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex justify-center items-center text-gray-400 hover:text-white active:scale-95 transition-all">
@@ -501,8 +506,7 @@
 
 
     <!-- SUBPAGE: Tasks Archive -->
-    <div id="subpage-tasks-archive"
-        class="subpage bg-gray-900/40 backdrop-blur-2xl px-6 pb-32 pt-10 w-full max-w-4xl mx-auto sm:border-x sm:border-white/10 overflow-y-auto">
+    <div id="subpage-tasks-archive" class="subpage px-6 pb-32 pt-10 sm:border-x sm:border-white/10 overflow-y-auto">
         <div class="flex items-center gap-4 mb-8">
             <button onclick="closeSubpage('tasks-archive')"
                 class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex justify-center items-center text-gray-400 hover:text-white active:scale-95 transition-all">
@@ -518,8 +522,7 @@
 
 
     <!-- SUBPAGE: Notes Archive -->
-    <div id="subpage-notes-archive"
-        class="subpage bg-gray-900/40 backdrop-blur-2xl px-6 pb-32 pt-10 w-full max-w-4xl mx-auto sm:border-x sm:border-white/10 overflow-y-auto">
+    <div id="subpage-notes-archive" class="subpage px-6 pb-32 pt-10 sm:border-x sm:border-white/10 overflow-y-auto">
         <div class="flex items-center gap-4 mb-8 border-b border-white/10 pb-4">
             <button onclick="closeSubpage('notes-archive')"
                 class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex justify-center items-center text-gray-400 hover:text-white active:scale-95 transition-all">

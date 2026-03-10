@@ -159,7 +159,7 @@
             margin: 0 auto;
             width: 100%;
             height: 100%;
-            transform: translateX(100%);
+            transform: translateX(100vw);
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             z-index: 50;
             background: #1f2937;
@@ -299,7 +299,7 @@
                     </div>
                 </div>
 
-                <div id="active-notes-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div id="active-notes-list" class="flex flex-col gap-4">
                     <!-- Dynamic Notes Injection -->
                 </div>
             </div>
@@ -417,6 +417,9 @@
         </div>
     </nav>
 
+    <!-- كانفاس المكافأة -->
+    <canvas id="confetti-canvas" class="fixed inset-0 pointer-events-none z-[9999]"></canvas>
+
 
     <!-- ================= SUB-PAGES (OVERLAYS) ================= -->
 
@@ -531,7 +534,7 @@
             <h2 class="text-xl font-bold text-white tracking-wide">أرشيف الملاحظات</h2>
         </div>
 
-        <div id="archived-notes-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div id="archived-notes-list" class="flex flex-col gap-3">
             <!-- Archived notes injected here -->
         </div>
     </div>
@@ -565,6 +568,12 @@
                     <div class="relative w-1/2">
                         <input type="time" id="newTaskTime"
                             class="w-full bg-white/[0.05] border border-white/10 rounded-xl px-4 py-3.5 text-white focus:outline-none focus:border-emerald-500/50 transition-all [color-scheme:dark]">
+                    </div>
+                    <div
+                        class="relative w-1/2 flex items-center justify-between bg-white/[0.05] border border-white/10 rounded-xl px-4 py-3.5">
+                        <span class="text-gray-400 text-sm">التكرار:</span>
+                        <input type="number" id="newTaskRepetitions" min="1" max="99" value="1"
+                            class="w-16 bg-transparent text-white text-center font-bold focus:outline-none focus:border-emerald-500/50 transition-all">
                     </div>
                 </div>
             </div>
@@ -681,7 +690,10 @@
         function saveTask() {
             const titleInput = document.getElementById('newTaskTitle');
             const timeInput = document.getElementById('newTaskTime');
+            const repInput = document.getElementById('newTaskRepetitions');
+
             const title = titleInput.value.trim();
+            const maxRep = parseInt(repInput.value) || 1;
 
             if (!title) {
                 alert('الرجاء إدخال عنوان المهمة');
@@ -692,6 +704,8 @@
                 id: Date.now(),
                 title: title,
                 time: timeInput.value || 'بدون وقت',
+                maxRepetitions: maxRep,
+                currentRepetition: 0,
                 completed: false,
                 archivedAt: null // store timestamp when completed
             };
@@ -701,18 +715,40 @@
 
             titleInput.value = '';
             timeInput.value = '';
+            repInput.value = '1';
             closeTaskModal();
         }
 
         function toggleTask(id, event) {
             if (event) event.stopPropagation();
             const task = tasks.find(t => t.id === id);
+
             if (task) {
-                task.completed = !task.completed;
                 if (task.completed) {
-                    task.archivedAt = Date.now();
-                } else {
+                    // Reset task completely if clicked while completed
+                    task.completed = false;
+                    task.currentRepetition = 0;
                     task.archivedAt = null;
+                } else {
+                    // Increment repetition
+                    task.currentRepetition = (task.currentRepetition || 0) + 1;
+
+                    const max = task.maxRepetitions || 1;
+                    if (task.currentRepetition >= max) {
+                        task.completed = true;
+                        task.currentRepetition = max;
+                        task.archivedAt = Date.now();
+
+                        // احتفال الإنجاز
+                        if (typeof fireConfetti === 'function') fireConfetti();
+                        if (event) {
+                            const btn = event.currentTarget.tagName === 'BUTTON' ? event.currentTarget : event.currentTarget.querySelector('.checkbox-glass');
+                            if (btn) {
+                                btn.classList.add('checkbox-pulse');
+                                setTimeout(() => btn.classList.remove('checkbox-pulse'), 500);
+                            }
+                        }
+                    }
                 }
                 saveTasks();
             }
@@ -795,6 +831,32 @@
             }
         }
 
+        function archiveNoteDirectly(id, event) {
+            if (event) event.stopPropagation();
+            const note = notes.find(n => n.id === id);
+            if (note && !note.archived) {
+                note.archived = true;
+                note.archivedAt = Date.now();
+                saveNotesData();
+                if (typeof fireConfetti === 'function') fireConfetti();
+                if (event) {
+                    const btn = event.currentTarget.tagName === 'BUTTON' ? event.currentTarget : event.currentTarget.querySelector('.checkbox-glass');
+                    if (btn) {
+                        btn.classList.add('checkbox-pulse');
+                        setTimeout(() => btn.classList.remove('checkbox-pulse'), 500);
+                    }
+                }
+            }
+        }
+
+        function deleteNoteDirectly(id, event) {
+            if (event) event.stopPropagation();
+            customConfirm('هل أنت متأكد من حذف الملاحظة نهائياً؟', () => {
+                notes = notes.filter(n => n.id !== id);
+                saveNotesData();
+            });
+        }
+
         // -------------------------
         // UI Rendering Logic
         // -------------------------
@@ -867,18 +929,31 @@
                 taskEl.onclick = (e) => toggleTask(task.id, e);
 
                 let checkboxHTML = '';
+                const maxRep = task.maxRepetitions || 1;
+                const curRep = task.currentRepetition || 0;
+
+                let iterationHTML = '';
+                if (maxRep > 1 && !isCompleted) {
+                    iterationHTML = `<span class="text-[10px] font-bold text-emerald-500 mt-1">${curRep}/${maxRep}</span>`;
+                }
+
                 if (isCompleted && containerId === 'archived-tasks-list') {
                     // Inside archive: Show a distinctive green check style
                     checkboxHTML = `
-                        <button class="checkbox-glass active border-emerald-500 bg-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.3)] w-7 h-7 rounded-lg flex flex-col items-center justify-center shrink-0 transition-all duration-300 border border-white/20">
-                            <i class="fa-solid fa-check text-[10px] text-emerald-400"></i>
-                        </button>
+                        <div class="flex flex-col items-center justify-center shrink-0">
+                            <button class="checkbox-glass active border-emerald-500 bg-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.3)] w-7 h-7 rounded-lg flex flex-col items-center justify-center transition-all duration-300 border border-white/20">
+                                <i class="fa-solid fa-check text-[10px] text-emerald-400"></i>
+                            </button>
+                        </div>
                     `;
                 } else {
                     checkboxHTML = `
-                        <button class="checkbox-glass w-7 h-7 rounded-lg flex flex-col items-center justify-center shrink-0 transition-all duration-300 border border-white/20">
-                            <i class="fa-solid fa-check text-[10px] text-transparent transition-colors duration-300"></i>
-                        </button>
+                        <div class="flex flex-col items-center justify-center shrink-0">
+                            <button class="checkbox-glass ${curRep > 0 && !isCompleted ? 'border-emerald-500/50' : ''} w-7 h-7 rounded-lg flex flex-col items-center justify-center transition-all duration-300 border border-white/20">
+                                <i class="fa-solid fa-check text-[10px] ${isCompleted ? 'text-emerald-400' : 'text-transparent'} transition-colors duration-300"></i>
+                            </button>
+                            ${iterationHTML}
+                        </div>
                     `;
                 }
 
@@ -906,32 +981,50 @@
             if (notesList.length === 0) {
                 let msg = 'لا توجد ملاحظات حالياً.';
                 if (containerId === 'archived-notes-list') msg = 'لا توجد ملاحظات في الأرشيف.';
-                container.innerHTML = `<div class="col-span-full text-center text-gray-500 py-8 text-sm bg-white/[0.02] rounded-2xl border border-white/[0.05]">${msg}</div>`;
+                container.innerHTML = `<div class="text-center text-gray-500 py-8 text-sm bg-white/[0.02] rounded-2xl border border-white/[0.05]">${msg}</div>`;
                 return;
             }
 
             notesList.forEach(note => {
+                const isArchived = note.archived;
                 const noteEl = document.createElement('div');
-                noteEl.className = 'glass-panel bg-white/[0.02] rounded-2xl p-4 flex flex-col gap-2 cursor-pointer hover:bg-white/[0.05] hover:border-emerald-500/30 transition-all group overflow-hidden relative h-32';
+                noteEl.className = 'note-item glass-panel bg-gray-800/40 rounded-2xl p-4 flex items-center gap-4 group hover:-translate-y-1 hover:border-emerald-500/40 hover:bg-gray-800/80 transition-all duration-300 cursor-pointer';
                 noteEl.onclick = () => openNoteModal(note.id);
 
-                const shortContent = note.content.length > 60 ? note.content.substring(0, 60) + '...' : note.content;
-
-                let archiveActionDiv = '';
-                if (note.archived) {
-                    archiveActionDiv = `
-                     <button onclick="unarchiveNote(${note.id}, event)" class="absolute top-2 left-2 w-8 h-8 bg-gray-800 rounded-lg text-emerald-400 border border-white/10 flex items-center justify-center hover:bg-emerald-500 hover:text-gray-900 transition-all" title="استعادة للنشطة">
-                        <i class="fa-solid fa-arrow-up-from-bracket text-xs"></i>
-                    </button>`;
+                let checkboxHTML = '';
+                if (isArchived && containerId === 'archived-notes-list') {
+                    // Inside archive: Show a distinctive green check style
+                    checkboxHTML = `
+                        <div class="flex flex-col items-center justify-center shrink-0">
+                            <button onclick="unarchiveNote(${note.id}, event)" class="checkbox-glass active border-emerald-500 bg-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.3)] w-7 h-7 rounded-lg flex flex-col items-center justify-center transition-all duration-300 border border-white/20" title="استعادة الملاحظة">
+                                <i class="fa-solid fa-check text-[10px] text-emerald-400"></i>
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    checkboxHTML = `
+                        <div class="flex flex-col items-center justify-center shrink-0">
+                            <button onclick="archiveNoteDirectly(${note.id}, event)" class="checkbox-glass w-7 h-7 rounded-lg flex flex-col items-center justify-center transition-all duration-300 border border-white/20" title="إنجاز الملاحظة">
+                                <i class="fa-solid fa-check text-[10px] text-transparent hover:text-emerald-400/50 transition-colors duration-300"></i>
+                            </button>
+                        </div>
+                    `;
                 }
 
+                const shortContent = note.content.length > 40 ? note.content.substring(0, 40) + '...' : note.content;
+
                 noteEl.innerHTML = `
-                    <div class="flex justify-between items-start">
-                        <h3 class="text-white font-bold text-sm truncate pr-2 border-r-2 border-emerald-500">${note.title}</h3>
-                        ${archiveActionDiv}
+                    ${checkboxHTML}
+                    <div class="flex-1 transition-all duration-300 overflow-hidden">
+                        <h3 class="${isArchived ? 'text-gray-500 line-through' : 'text-white'} font-medium text-base mb-1 transition-colors duration-300 truncate">${note.title}</h3>
+                        <p class="text-gray-400 text-xs truncate">
+                            ${shortContent || 'بدون محتوى'}
+                        </p>
+                        <span class="block text-[10px] text-gray-600 mt-1">${note.updatedAt}</span>
                     </div>
-                    <p class="text-gray-400 text-xs mt-1 leading-relaxed whitespace-pre-line overflow-hidden flex-1">${shortContent}</p>
-                    <span class="text-[10px] text-gray-600 self-end mt-1">${note.updatedAt}</span>
+                    <button onclick="deleteNoteDirectly(${note.id}, event)" class="w-8 h-8 rounded-full flex items-center justify-center text-red-400 opacity-60 hover:opacity-100 hover:bg-red-500/10 transition-all" title="حذف نهائي">
+                        <i class="fa-solid fa-trash-can text-sm"></i>
+                    </button>
                 `;
                 container.appendChild(noteEl);
             });
@@ -1260,6 +1353,82 @@
                 localStorage.clear();
                 window.location.reload();
             });
+        }
+
+        // -------------------------
+        // تأثير الاحتفال (Confetti)
+        // -------------------------
+        const canvas = document.getElementById('confetti-canvas');
+        let ctx = null;
+        let particles = [];
+        let animationId = null;
+
+        if (canvas) {
+            ctx = canvas.getContext('2d');
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+        }
+
+        function fireConfetti() {
+            if (!canvas || !ctx) return;
+            const colors = ['#10b981', '#3b82f6', '#ffffff'];
+            const x = canvas.width / 2;
+            const y = canvas.height;
+
+            for (let i = 0; i < 80; i++) {
+                particles.push({
+                    x: x, y: y,
+                    r: Math.random() * 5 + 2,
+                    dx: Math.random() * 16 - 8,
+                    dy: Math.random() * -20 - 5,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    tilt: Math.random() * 10,
+                    tiltAngleInc: (Math.random() * 0.07) + 0.05,
+                    tiltAngle: 0,
+                    life: 1,
+                    decay: Math.random() * 0.02 + 0.01
+                });
+            }
+            if (!animationId) animateConfetti();
+        }
+
+        function animateConfetti() {
+            animationId = requestAnimationFrame(animateConfetti);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            let active = false;
+
+            for (let i = 0; i < particles.length; i++) {
+                let p = particles[i];
+                if (p.life <= 0) continue;
+                active = true;
+
+                p.tiltAngle += p.tiltAngleInc;
+                p.y += (Math.cos(p.tiltAngle) + p.dy);
+                p.x += Math.sin(p.tiltAngle) * 2 + p.dx;
+                p.dy += 0.4; // gravity
+                p.life -= p.decay;
+
+                ctx.beginPath();
+                ctx.lineWidth = p.r;
+                ctx.strokeStyle = p.color;
+                ctx.globalAlpha = p.life;
+                ctx.moveTo(p.x + p.tilt + p.r, p.y);
+                ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r);
+                ctx.stroke();
+            }
+
+            ctx.globalAlpha = 1;
+
+            if (!active) {
+                particles = [];
+                cancelAnimationFrame(animationId);
+                animationId = null;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
         }
     </script>
 </body>

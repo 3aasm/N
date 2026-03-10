@@ -1280,7 +1280,7 @@
         function appendGlobalArchiveButton(container, type) {
             if (settings.showGlobalArchiveBtn !== false) { // True by default
                 const btn = document.createElement('button');
-                btn.className = 'w-full mt-4 bg-white/5 hover:bg-white/10 border border-white/10 text-emerald-400 text-sm font-bold py-3 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2';
+                btn.className = 'w-full mt-2 bg-transparent hover:bg-white/5 text-gray-400 hover:text-emerald-400 text-sm font-bold py-3 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2 border border-transparent hover:border-white/5';
                 btn.innerHTML = '<i class="fa-solid fa-box-open"></i> عرض جميع الأرشيف السابقة';
                 btn.onclick = () => openGlobalArchive(type);
                 container.appendChild(btn);

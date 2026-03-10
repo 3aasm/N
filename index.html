@@ -379,6 +379,37 @@
                         </div>
                     </div>
 
+                    <!-- Show Global Archive Button Toggle -->
+                    <div class="flex justify-between items-center border-b border-white/10 pb-5">
+                        <div class="flex gap-3 items-center">
+                            <div
+                                class="w-8 h-8 rounded-lg bg-gray-500/10 text-gray-400 flex justify-center items-center">
+                                <i class="fa-solid fa-box-open"></i>
+                            </div>
+                            <span class="text-white font-medium text-sm">إظهار زر الأرشيف الشامل في القوائم</span>
+                        </div>
+                        <div id="global-archive-toggle-btn" onclick="toggleSetting('showGlobalArchiveBtn')"
+                            class="w-12 h-6 bg-emerald-500 rounded-full relative cursor-pointer shadow-[0_0_10px_rgba(16,185,129,0.3)] transition-colors duration-300">
+                            <div id="global-archive-toggle-thumb"
+                                class="w-5 h-5 bg-white rounded-full absolute top-0.5 right-[26px] toggle-thumb shadow-sm">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Global Archive Page Link -->
+                    <button onclick="openGlobalArchive('all')"
+                        class="flex justify-between items-center border-b border-white/10 pb-5 text-right w-full group active:scale-[0.98] transition-all">
+                        <div class="flex gap-3 items-center">
+                            <div
+                                class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex justify-center items-center">
+                                <i class="fa-solid fa-boxes-stacked"></i>
+                            </div>
+                            <span class="text-white font-medium">الأرشيف الشامل (السجل الكامل)</span>
+                        </div>
+                        <i
+                            class="fa-solid fa-chevron-left text-gray-500 group-hover:text-emerald-400 transition-colors"></i>
+                    </button>
+
                     <!-- Delete Data -->
                     <button onclick="clearAllData()"
                         class="flex items-center justify-center gap-2 bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 rounded-xl transition-all py-3 font-bold mt-2 active:scale-95">
@@ -572,6 +603,41 @@
     </div>
 
 
+    <!-- SUBPAGE: Global Archive -->
+    <div id="subpage-global-archive"
+        class="subpage px-6 pb-32 pt-10 sm:border-x sm:border-white/10 overflow-y-auto overscroll-none flex flex-col">
+        <div class="flex justify-between items-center mb-6 shrink-0">
+            <div class="flex items-center gap-4">
+                <button onclick="closeSubpage('global-archive')"
+                    class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex justify-center items-center text-gray-400 hover:text-white active:scale-95 transition-all">
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+                <h2 class="text-xl font-bold text-white tracking-wide">الأرشيف الشامل</h2>
+            </div>
+            <button onclick="deleteAllArchivedDataGlobal()"
+                class="text-xs font-bold text-red-400 hover:text-red-300 drop-shadow-[0_0_5px_rgba(239,68,68,0.4)] px-3 py-2 bg-red-500/10 rounded-lg border border-red-500/20 active:scale-95 transition-all flex items-center gap-2">
+                <i class="fa-solid fa-trash-can"></i> مسح الكل
+            </button>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex gap-2 mb-6 bg-black/20 p-1 rounded-xl shrink-0">
+            <button id="tab-global-tasks" onclick="switchGlobalArchiveTab('tasks')"
+                class="flex-1 py-2 text-sm font-bold text-white bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)] rounded-lg transition-all">
+                أرشيف المهام
+            </button>
+            <button id="tab-global-notes" onclick="switchGlobalArchiveTab('notes')"
+                class="flex-1 py-2 text-sm font-bold text-gray-400 hover:text-white rounded-lg transition-all">
+                أرشيف الملاحظات
+            </button>
+        </div>
+
+        <!-- Lists -->
+        <div id="global-archive-tasks-list" class="flex-1 flex flex-col gap-3"></div>
+        <div id="global-archive-notes-list" class="flex-1 flex flex-col gap-3 hidden"></div>
+    </div>
+
+
     <!-- ================= MODALS ================= -->
 
     <!-- Modal: Add/Edit Task -->
@@ -678,8 +744,10 @@
             notif: false,
             wallpaper: 'default',
             customWallpaperData: null,
-            blurIntensity: 80
+            blurIntensity: 80,
+            showGlobalArchiveBtn: true
         };
+        if (settings.showGlobalArchiveBtn === undefined) settings.showGlobalArchiveBtn = true;
 
         let currentEditingNoteId = null;
         let currentEditingTaskId = null;
@@ -718,6 +786,74 @@
                     }
                 }
             }, { passive: false });
+        }
+
+        // -------------------------
+        // Swipe to Return (Close Subpage)
+        // -------------------------
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        document.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        document.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, { passive: true });
+
+        function handleSwipe() {
+            // Right-to-Left swipe (swipe direction leftwards)
+            // It means touchStartX must be significantly larger than touchEndX
+
+            const SWIPE_THRESHOLD = 50;
+            if (touchStartX - touchEndX > SWIPE_THRESHOLD) {
+                // Determine if a subpage is active
+                const activeSubpage = document.querySelector('.subpage.active');
+                if (activeSubpage) {
+                    const subId = activeSubpage.id.replace('subpage-', '');
+                    closeSubpage(subId);
+                }
+            }
+        }
+
+        // -------------------------
+        // Date Generators
+        // -------------------------
+        function isToday(timestamp) {
+            if (!timestamp) return false;
+            const today = new Date();
+            const date = new Date(timestamp);
+            return date.getDate() === today.getDate() &&
+                date.getMonth() === today.getMonth() &&
+                date.getFullYear() === today.getFullYear();
+        }
+
+        function formatArabicDate(timestamp) {
+            if (!timestamp) return 'غير معروف';
+
+            const days = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+            const date = new Date(timestamp);
+            const today = new Date();
+
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+
+            const isTdy = isToday(timestamp);
+            const isYst = date.getDate() === yesterday.getDate() &&
+                date.getMonth() === yesterday.getMonth() &&
+                date.getFullYear() === yesterday.getFullYear();
+
+            const dayName = days[date.getDay()];
+
+            if (isTdy) {
+                return `اليوم ${dayName}`;
+            } else if (isYst) {
+                return `أمس ${dayName}`;
+            } else {
+                return `${dayName} ${date.getDate()}/${date.getMonth() + 1}`;
+            }
         }
 
 
@@ -967,28 +1103,7 @@
         }
 
         function cleanupOldArchives() {
-            const ONE_DAY_MS = 24 * 60 * 60 * 1000;
-            const now = Date.now();
-
-            let tasksChanged = false;
-            tasks = tasks.filter(t => {
-                if (t.completed && t.archivedAt && (now - t.archivedAt > ONE_DAY_MS)) {
-                    tasksChanged = true;
-                    return false;
-                }
-                return true;
-            });
-            if (tasksChanged) localStorage.setItem('myNotebookTasks', JSON.stringify(tasks));
-
-            let notesChanged = false;
-            notes = notes.filter(n => {
-                if (n.archived && n.archivedAt && (now - n.archivedAt > ONE_DAY_MS)) {
-                    notesChanged = true;
-                    return false;
-                }
-                return true;
-            });
-            if (notesChanged) localStorage.setItem('myNotebookNotesArray', JSON.stringify(notes));
+            // 2026-03 - User requested permanent global archives. Deletion logic removed.
         }
 
         function renderTasksList(containerId, tasksList) {
@@ -996,14 +1111,33 @@
             if (!container) return;
             container.innerHTML = '';
 
-            if (tasksList.length === 0) {
+            let listToRender = tasksList;
+            const isLocalArchive = containerId === 'archived-tasks-list';
+
+            if (isLocalArchive) {
+                listToRender = tasksList.filter(t => isToday(t.archivedAt));
+            }
+
+            if (listToRender.length === 0) {
                 let msg = 'لا توجد مهام حالياً.';
-                if (containerId === 'archived-tasks-list') msg = 'لا توجد مهام منجزة في الأرشيف.';
+                if (isLocalArchive) msg = 'لا توجد مهام منجزة اليوم.';
                 container.innerHTML = `<div class="text-center text-gray-500 py-8 text-sm bg-white/[0.02] rounded-2xl border border-white/[0.05]">${msg}</div>`;
+                appendGlobalArchiveButton(container, 'tasks');
                 return;
             }
 
-            tasksList.forEach(task => {
+            if (isLocalArchive) {
+                const todayStr = formatArabicDate(Date.now());
+                container.innerHTML = `
+                    <div class="flex items-center justify-center gap-4 my-4 opacity-70">
+                        <div class="h-[1px] flex-1 bg-gradient-to-r from-transparent to-white/20"></div>
+                        <span class="text-xs font-bold text-gray-400 tracking-wider">${todayStr}</span>
+                        <div class="h-[1px] flex-1 bg-gradient-to-l from-transparent to-white/20"></div>
+                    </div>
+                `;
+            }
+
+            listToRender.forEach(task => {
                 const isCompleted = task.completed;
                 const taskEl = document.createElement('div');
                 taskEl.className = 'task-item glass-panel bg-gray-800/40 rounded-2xl p-4 flex items-center gap-4 group hover:-translate-y-1 hover:border-emerald-500/40 hover:bg-gray-800/80 transition-all duration-300 cursor-pointer';
@@ -1018,7 +1152,7 @@
                     iterationHTML = `<span class="text-[10px] font-bold text-emerald-500 mt-1">${curRep}/${maxRep}</span>`;
                 }
 
-                if (isCompleted && containerId === 'archived-tasks-list') {
+                if (isCompleted && isLocalArchive) {
                     // Inside archive: Show a distinctive green check style
                     checkboxHTML = `
                         <div class="flex flex-col items-center justify-center shrink-0">
@@ -1057,6 +1191,10 @@
                 `;
                 container.appendChild(taskEl);
             });
+
+            if (isLocalArchive) {
+                appendGlobalArchiveButton(container, 'tasks');
+            }
         }
 
         function renderNotesList(containerId, notesList) {
@@ -1064,21 +1202,40 @@
             if (!container) return;
             container.innerHTML = '';
 
-            if (notesList.length === 0) {
+            let listToRender = notesList;
+            const isLocalArchive = containerId === 'archived-notes-list';
+
+            if (isLocalArchive) {
+                listToRender = notesList.filter(n => isToday(n.archivedAt));
+            }
+
+            if (listToRender.length === 0) {
                 let msg = 'لا توجد ملاحظات حالياً.';
-                if (containerId === 'archived-notes-list') msg = 'لا توجد ملاحظات في الأرشيف.';
+                if (isLocalArchive) msg = 'لا توجد ملاحظات مؤرشفة اليوم.';
                 container.innerHTML = `<div class="text-center text-gray-500 py-8 text-sm bg-white/[0.02] rounded-2xl border border-white/[0.05]">${msg}</div>`;
+                appendGlobalArchiveButton(container, 'notes');
                 return;
             }
 
-            notesList.forEach(note => {
+            if (isLocalArchive) {
+                const todayStr = formatArabicDate(Date.now());
+                container.innerHTML = `
+                    <div class="flex items-center justify-center gap-4 my-4 opacity-70">
+                        <div class="h-[1px] flex-1 bg-gradient-to-r from-transparent to-white/20"></div>
+                        <span class="text-xs font-bold text-gray-400 tracking-wider">${todayStr}</span>
+                        <div class="h-[1px] flex-1 bg-gradient-to-l from-transparent to-white/20"></div>
+                    </div>
+                `;
+            }
+
+            listToRender.forEach(note => {
                 const isArchived = note.archived;
                 const noteEl = document.createElement('div');
                 noteEl.className = 'note-item glass-panel bg-gray-800/40 rounded-2xl p-4 flex items-center gap-4 group hover:-translate-y-1 hover:border-emerald-500/40 hover:bg-gray-800/80 transition-all duration-300 cursor-pointer';
                 noteEl.onclick = () => openNoteModal(note.id);
 
                 let checkboxHTML = '';
-                if (isArchived && containerId === 'archived-notes-list') {
+                if (isArchived && isLocalArchive) {
                     // Inside archive: Show a distinctive green check style
                     checkboxHTML = `
                         <div class="flex flex-col items-center justify-center shrink-0">
@@ -1113,6 +1270,129 @@
                     </button>
                 `;
                 container.appendChild(noteEl);
+            });
+
+            if (isLocalArchive) {
+                appendGlobalArchiveButton(container, 'notes');
+            }
+        }
+
+        function appendGlobalArchiveButton(container, type) {
+            if (settings.showGlobalArchiveBtn !== false) { // True by default
+                const btn = document.createElement('button');
+                btn.className = 'w-full mt-4 bg-white/5 hover:bg-white/10 border border-white/10 text-emerald-400 text-sm font-bold py-3 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2';
+                btn.innerHTML = '<i class="fa-solid fa-box-open"></i> عرض جميع الأرشيف السابقة';
+                btn.onclick = () => openGlobalArchive(type);
+                container.appendChild(btn);
+            }
+        }
+
+        // -------------------------
+        // Global Archives Flow
+        // -------------------------
+        function openGlobalArchive(defaultType = 'tasks') {
+            openSubpage('global-archive');
+            switchGlobalArchiveTab(defaultType === 'notes' ? 'notes' : 'tasks');
+        }
+
+        function switchGlobalArchiveTab(type) {
+            const tabTasks = document.getElementById('tab-global-tasks');
+            const tabNotes = document.getElementById('tab-global-notes');
+            const listTasks = document.getElementById('global-archive-tasks-list');
+            const listNotes = document.getElementById('global-archive-notes-list');
+
+            if (type === 'tasks') {
+                tabTasks.className = 'flex-1 py-2 text-sm font-bold text-white bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)] rounded-lg transition-all';
+                tabNotes.className = 'flex-1 py-2 text-sm font-bold text-gray-400 hover:text-white rounded-lg transition-all';
+                listTasks.classList.remove('hidden');
+                listNotes.classList.add('hidden');
+                renderGlobalArchive('tasks');
+            } else {
+                tabNotes.className = 'flex-1 py-2 text-sm font-bold text-white bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)] rounded-lg transition-all';
+                tabTasks.className = 'flex-1 py-2 text-sm font-bold text-gray-400 hover:text-white rounded-lg transition-all';
+                listNotes.classList.remove('hidden');
+                listTasks.classList.add('hidden');
+                renderGlobalArchive('notes');
+            }
+        }
+
+        function renderGlobalArchive(type) {
+            const container = document.getElementById(type === 'tasks' ? 'global-archive-tasks-list' : 'global-archive-notes-list');
+            container.innerHTML = '';
+
+            let data = type === 'tasks' ? tasks.filter(t => t.completed) : notes.filter(n => n.archived);
+
+            if (data.length === 0) {
+                container.innerHTML = `<div class="text-center text-gray-500 py-8 text-sm bg-white/[0.02] rounded-2xl border border-white/[0.05]">الأرشيف الشامل فارغ حالياً.</div>`;
+                return;
+            }
+
+            // Group by date
+            const grouped = {};
+            data.forEach(item => {
+                const dateKey = formatArabicDate(item.archivedAt);
+                if (!grouped[dateKey]) grouped[dateKey] = [];
+                grouped[dateKey].push(item);
+            });
+
+            // Flatten keys and sort roughly by parsing date if required, but since we pushed sequentially, 
+            // the newest are usually at the top in the tasks array natively. We will rely on natural array order for now.
+            for (const [dateStr, items] of Object.entries(grouped)) {
+
+                // Add Divider
+                container.innerHTML += `
+                    <div class="flex items-center justify-center gap-4 my-2 opacity-70 mt-6">
+                        <div class="h-[1px] flex-1 bg-gradient-to-r from-transparent to-emerald-500/50"></div>
+                        <span class="text-sm font-bold text-emerald-400 tracking-wider">${dateStr}</span>
+                        <div class="h-[1px] flex-1 bg-gradient-to-l from-transparent to-emerald-500/50"></div>
+                    </div>
+                `;
+
+                // Add Items
+                items.forEach(item => {
+                    const el = document.createElement('div');
+                    el.className = 'glass-panel bg-gray-800/40 rounded-2xl p-4 flex items-center gap-4 group hover:-translate-y-1 hover:border-emerald-500/40 hover:bg-gray-800/80 transition-all duration-300';
+
+                    if (type === 'tasks') {
+                        el.innerHTML = `
+                            <div class="flex flex-col items-center justify-center shrink-0">
+                                <div class="checkbox-glass active border-emerald-500 bg-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.3)] w-7 h-7 rounded-lg flex flex-col items-center justify-center border border-white/20">
+                                    <i class="fa-solid fa-check text-[10px] text-emerald-400"></i>
+                                </div>
+                            </div>
+                            <div class="flex-1 overflow-hidden">
+                                <h3 class="text-gray-400 line-through font-medium text-base mb-1 truncate">${item.title}</h3>
+                                <p class="text-gray-500 text-xs truncate">
+                                    <i class="fa-regular fa-clock"></i> ${item.time}
+                                </p>
+                            </div>
+                        `;
+                    } else {
+                        const shortContent = item.content.length > 40 ? item.content.substring(0, 40) + '...' : item.content;
+                        el.innerHTML = `
+                            <div class="flex-1 overflow-hidden">
+                                <h3 class="text-gray-400 line-through font-medium text-base mb-1 truncate">${item.title}</h3>
+                                <p class="text-gray-500 text-xs truncate">
+                                    ${shortContent || 'بدون محتوى'}
+                                </p>
+                            </div>
+                        `;
+                        el.onclick = () => openNoteModal(item.id);
+                        el.style.cursor = 'pointer';
+                    }
+                    container.appendChild(el);
+                });
+            }
+        }
+
+        function deleteAllArchivedDataGlobal() {
+            customConfirm('هل أنت متأكد من مسح جميع الأرشيف الشامل نهائياً؟', () => {
+                tasks = tasks.filter(t => !t.completed);
+                notes = notes.filter(n => !n.archived);
+                saveTasks();
+                saveNotesData();
+                renderGlobalArchive('tasks');
+                renderGlobalArchive('notes');
             });
         }
 
@@ -1271,6 +1551,20 @@
                 notifBtn.classList.remove('shadow-[0_0_10px_rgba(16,185,129,0.3)]');
                 notifThumb.style.right = '2px';
                 notifIcon.classList.replace('text-emerald-400', 'text-blue-400');
+            }
+
+            // Global Archive Button Visuals
+            const globalBtn = document.getElementById('global-archive-toggle-btn');
+            const globalThumb = document.getElementById('global-archive-toggle-thumb');
+
+            if (settings.showGlobalArchiveBtn) {
+                globalBtn.classList.replace('bg-white/20', 'bg-emerald-500');
+                globalBtn.classList.add('shadow-[0_0_10px_rgba(16,185,129,0.3)]');
+                globalThumb.style.right = '26px';
+            } else {
+                globalBtn.classList.replace('bg-emerald-500', 'bg-white/20');
+                globalBtn.classList.remove('shadow-[0_0_10px_rgba(16,185,129,0.3)]');
+                globalThumb.style.right = '2px';
             }
 
             // Blur Toggle Visuals

@@ -584,9 +584,11 @@
                 </div>
 
                 <div class="flex flex-col sm:flex-row gap-4">
-                    <div class="relative w-full sm:w-1/3">
+                    <div
+                        class="relative w-full sm:w-1/3 flex items-center justify-between bg-white/[0.05] border border-white/10 rounded-xl px-4 py-3.5">
+                        <span class="text-gray-400 text-sm">الوقت:</span>
                         <input type="time" id="newTaskTime"
-                            class="w-full bg-white/[0.05] border border-white/10 rounded-xl px-4 py-3.5 text-white focus:outline-none focus:border-emerald-500/50 transition-all [color-scheme:dark]">
+                            class="w-auto bg-transparent text-white text-left font-bold focus:outline-none focus:border-emerald-500/50 transition-all [color-scheme:dark]">
                     </div>
                     <div
                         class="relative w-full sm:w-1/3 flex items-center justify-between bg-white/[0.05] border border-white/10 rounded-xl px-4 py-3.5">
@@ -667,6 +669,7 @@
         };
 
         let currentEditingNoteId = null;
+        let currentEditingTaskId = null;
         let pendingConfirmCallback = null;
 
         // Boot
@@ -709,19 +712,30 @@
                 return;
             }
 
-            const newTask = {
-                id: Date.now(),
-                title: title,
-                time: timeInput.value || 'بدون وقت',
-                maxRepetitions: maxRep,
-                notifBefore: notifBefore,
-                notified: false,
-                currentRepetition: 0,
-                completed: false,
-                archivedAt: null // store timestamp when completed
-            };
+            if (currentEditingTaskId) {
+                const task = tasks.find(t => t.id === currentEditingTaskId);
+                if (task) {
+                    task.title = title;
+                    task.time = timeInput.value || 'بدون وقت';
+                    task.maxRepetitions = maxRep;
+                    task.notifBefore = notifBefore;
+                }
+                currentEditingTaskId = null;
+            } else {
+                const newTask = {
+                    id: Date.now(),
+                    title: title,
+                    time: timeInput.value || 'بدون وقت',
+                    maxRepetitions: maxRep,
+                    notifBefore: notifBefore,
+                    notified: false,
+                    currentRepetition: 0,
+                    completed: false,
+                    archivedAt: null
+                };
+                tasks.unshift(newTask);
+            }
 
-            tasks.unshift(newTask);
             saveTasks();
 
             titleInput.value = '';
@@ -729,6 +743,19 @@
             repInput.value = '1';
             notifInput.value = '5';
             closeTaskModal();
+        }
+
+        function editTask(id, event) {
+            if (event) event.stopPropagation();
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                currentEditingTaskId = id;
+                document.getElementById('newTaskTitle').value = task.title;
+                document.getElementById('newTaskTime').value = task.time !== 'بدون وقت' ? task.time : '';
+                document.getElementById('newTaskRepetitions').value = task.maxRepetitions || 1;
+                document.getElementById('newTaskNotifBefore').value = task.notifBefore || 5;
+                openTaskModal();
+            }
         }
 
         function toggleTask(id, event) {
@@ -979,9 +1006,14 @@
                             <i class="fa-regular fa-clock ${isCompleted ? 'text-gray-500' : 'text-emerald-500/70'}"></i> ${task.time}
                         </p>
                     </div>
-                    <button onclick="deleteTask(${task.id}, event)" class="w-8 h-8 rounded-full flex items-center justify-center text-red-400 opacity-60 hover:opacity-100 hover:bg-red-500/10 transition-all" title="حذف نهائي">
-                        <i class="fa-solid fa-trash-can text-sm"></i>
-                    </button>
+                    <div class="flex items-center gap-1 shrink-0">
+                        <button onclick="editTask(${task.id}, event)" class="w-8 h-8 rounded-full flex items-center justify-center text-blue-400 opacity-60 hover:opacity-100 hover:bg-blue-500/10 transition-all" title="تعديل">
+                            <i class="fa-solid fa-pen text-sm"></i>
+                        </button>
+                        <button onclick="deleteTask(${task.id}, event)" class="w-8 h-8 rounded-full flex items-center justify-center text-red-400 opacity-60 hover:opacity-100 hover:bg-red-500/10 transition-all" title="حذف نهائي">
+                            <i class="fa-solid fa-trash-can text-sm"></i>
+                        </button>
+                    </div>
                 `;
                 container.appendChild(taskEl);
             });
@@ -1121,6 +1153,13 @@
             setTimeout(() => {
                 modal.classList.remove('flex');
                 modal.classList.add('hidden');
+
+                // Clear inputs if closed without saving
+                document.getElementById('newTaskTitle').value = '';
+                document.getElementById('newTaskTime').value = '';
+                document.getElementById('newTaskRepetitions').value = '1';
+                document.getElementById('newTaskNotifBefore').value = '5';
+                currentEditingTaskId = null;
             }, 300);
         }
 

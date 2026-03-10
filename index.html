@@ -301,7 +301,7 @@
                         </button>
                         <button onclick="openNoteModal()"
                             class="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-gray-900 font-bold px-3 py-2 rounded-xl text-sm transition-all active:scale-95 shadow-[0_0_15px_rgba(16,185,129,0.3)]">
-                            <i class="fa-solid fa-plus"></i> إضافة جديد
+                            <i class="fa-solid fa-plus"></i> ملاحظة
                         </button>
                     </div>
                 </div>
@@ -583,13 +583,19 @@
                         class="w-full bg-white/[0.05] border border-white/10 rounded-xl pr-12 pl-4 py-4 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all">
                 </div>
 
-                <div class="flex gap-4">
-                    <div class="relative w-1/2">
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <div class="relative w-full sm:w-1/3">
                         <input type="time" id="newTaskTime"
                             class="w-full bg-white/[0.05] border border-white/10 rounded-xl px-4 py-3.5 text-white focus:outline-none focus:border-emerald-500/50 transition-all [color-scheme:dark]">
                     </div>
                     <div
-                        class="relative w-1/2 flex items-center justify-between bg-white/[0.05] border border-white/10 rounded-xl px-4 py-3.5">
+                        class="relative w-full sm:w-1/3 flex items-center justify-between bg-white/[0.05] border border-white/10 rounded-xl px-4 py-3.5">
+                        <span class="text-gray-400 text-sm">تنبيه قبل (د):</span>
+                        <input type="number" id="newTaskNotifBefore" min="1" max="30" value="5"
+                            class="w-16 bg-transparent text-white text-center font-bold focus:outline-none focus:border-emerald-500/50 transition-all">
+                    </div>
+                    <div
+                        class="relative w-full sm:w-1/3 flex items-center justify-between bg-white/[0.05] border border-white/10 rounded-xl px-4 py-3.5">
                         <span class="text-gray-400 text-sm">التكرار:</span>
                         <input type="number" id="newTaskRepetitions" min="1" max="99" value="1"
                             class="w-16 bg-transparent text-white text-center font-bold focus:outline-none focus:border-emerald-500/50 transition-all">
@@ -613,31 +619,13 @@
                     class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex justify-center items-center text-gray-400 hover:text-white active:scale-95 transition-all shrink-0">
                     <i class="fa-solid fa-arrow-right"></i>
                 </button>
-                <input type="text" id="currentNoteTitle" placeholder="عنوان الملاحظة (اختياري)"
+                <input type="text" id="currentNoteTitle" placeholder="عنوان الملاحظة (اختياري)" oninput="autoSaveNote()"
                     class="bg-transparent border-none text-xl font-bold text-emerald-400 placeholder-emerald-400/50 focus:outline-none w-full">
             </div>
-
-            <!-- Check button to archive -->
-            <button id="archive-note-btn" onclick="archiveCurrentNote()"
-                class="hidden w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500 hover:text-gray-900 active:scale-95 transition-all shrink-0 flex items-center justify-center transform tooltip mr-2"
-                title="إكمال وإرسال للأرشيف">
-                <i class="fa-solid fa-check text-lg"></i>
-            </button>
         </div>
 
-        <textarea id="currentNoteContent" placeholder="اكتب ملاحظاتك بحرية هنا..."
-            class="flex-1 w-full bg-white/[0.03] border border-white/10 rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/30 transition-all resize-none mb-6"></textarea>
-
-        <div class="flex justify-between gap-3 shrink-0">
-            <button id="delete-note-btn" onclick="deleteCurrentNote()"
-                class="hidden w-14 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white border border-red-500/20 rounded-xl transition-all active:scale-95 flex items-center justify-center">
-                <i class="fa-solid fa-trash-can"></i>
-            </button>
-            <button onclick="saveCurrentNote()"
-                class="flex-1 bg-emerald-500 hover:bg-emerald-400 text-gray-900 font-bold text-lg py-4 rounded-xl transition-all shadow-sm active:scale-95">
-                حفظ الملاحظة
-            </button>
-        </div>
+        <textarea id="currentNoteContent" placeholder="اكتب ملاحظاتك بحرية هنا..." oninput="autoSaveNote()"
+            class="flex-1 w-full bg-transparent border-none p-4 text-white placeholder-gray-500 focus:outline-none resize-none mb-6 text-lg leading-relaxed"></textarea>
     </div>
 
     <!-- Modal: Custom Confirm -->
@@ -710,9 +698,11 @@
             const titleInput = document.getElementById('newTaskTitle');
             const timeInput = document.getElementById('newTaskTime');
             const repInput = document.getElementById('newTaskRepetitions');
+            const notifInput = document.getElementById('newTaskNotifBefore');
 
             const title = titleInput.value.trim();
             const maxRep = parseInt(repInput.value) || 1;
+            const notifBefore = parseInt(notifInput.value) || 5;
 
             if (!title) {
                 alert('الرجاء إدخال عنوان المهمة');
@@ -724,6 +714,8 @@
                 title: title,
                 time: timeInput.value || 'بدون وقت',
                 maxRepetitions: maxRep,
+                notifBefore: notifBefore,
+                notified: false,
                 currentRepetition: 0,
                 completed: false,
                 archivedAt: null // store timestamp when completed
@@ -735,6 +727,7 @@
             titleInput.value = '';
             timeInput.value = '';
             repInput.value = '1';
+            notifInput.value = '5';
             closeTaskModal();
         }
 
@@ -796,14 +789,13 @@
         // -------------------------
         // Core: Notes
         // -------------------------
-        function saveCurrentNote() {
+        function autoSaveNote() {
             const titleInput = document.getElementById('currentNoteTitle');
             const contentInput = document.getElementById('currentNoteContent');
             const title = titleInput.value.trim();
             const content = contentInput.value.trim();
 
             if (!content && !title) {
-                closeNoteModal();
                 return;
             }
 
@@ -815,41 +807,20 @@
                     note.updatedAt = new Date().toLocaleDateString('ar-EG');
                 }
             } else {
-                notes.unshift({
+                const newNote = {
                     id: Date.now(),
                     title: title || 'بدون عنوان',
                     content: content,
                     archived: false,
                     archivedAt: null,
                     updatedAt: new Date().toLocaleDateString('ar-EG')
-                });
+                };
+                notes.unshift(newNote);
+                currentEditingNoteId = newNote.id; // From now on, it patches this new note
             }
 
-            saveNotesData();
-            closeNoteModal();
-        }
-
-        function archiveCurrentNote() {
-            if (!currentEditingNoteId) return;
-            const note = notes.find(n => n.id === currentEditingNoteId);
-            if (note) {
-                // Also save current edits before archiving
-                note.title = document.getElementById('currentNoteTitle').value.trim() || 'بدون عنوان';
-                note.content = document.getElementById('currentNoteContent').value.trim();
-                note.archived = true;
-                note.archivedAt = Date.now();
-                saveNotesData();
-                closeNoteModal();
-            }
-        }
-
-        function deleteCurrentNote() {
-            if (!currentEditingNoteId) return;
-            customConfirm('هل أنت متأكد من حذف الملاحظة؟', () => {
-                notes = notes.filter(n => n.id !== currentEditingNoteId);
-                saveNotesData();
-                closeNoteModal();
-            });
+            // Save without triggering a full UI update instantly to avoid losing focus
+            localStorage.setItem('myNotebookNotesArray', JSON.stringify(notes));
         }
 
         function unarchiveNote(id, event) {
@@ -1158,22 +1129,16 @@
 
             const titleInput = document.getElementById('currentNoteTitle');
             const contentInput = document.getElementById('currentNoteContent');
-            const archBtn = document.getElementById('archive-note-btn');
-            const delBtn = document.getElementById('delete-note-btn');
 
             if (noteId) {
                 // Edit existing
                 const note = notes.find(n => n.id === noteId);
                 titleInput.value = note.title !== 'بدون عنوان' ? note.title : '';
                 contentInput.value = note.content;
-                if (!note.archived) archBtn.classList.remove('hidden'); else archBtn.classList.add('hidden');
-                delBtn.classList.remove('hidden');
             } else {
                 // New note
                 titleInput.value = '';
                 contentInput.value = '';
-                archBtn.classList.add('hidden');
-                delBtn.classList.add('hidden');
             }
 
             openSubpage('note-editor');
@@ -1184,6 +1149,7 @@
             closeSubpage('note-editor');
             setTimeout(() => {
                 currentEditingNoteId = null;
+                updateUI(); // refresh UI to reflect the auto-saved data
             }, 300);
         }
 
@@ -1248,7 +1214,31 @@
         }
 
         function toggleSetting(key) {
-            settings[key] = !settings[key];
+            if (key === 'notif') {
+                if (!settings.notif) {
+                    // Turn on requested
+                    if ("Notification" in window) {
+                        Notification.requestPermission().then(permission => {
+                            if (permission === 'granted') {
+                                settings.notif = true;
+                                localStorage.setItem('myNotebookSettings', JSON.stringify(settings));
+                                applySettings();
+                            } else {
+                                alert("يجب السماح بالإشعارات من المتصفح لتفعيل هذه الميزة.");
+                            }
+                        });
+                    } else {
+                        alert("متصفحك لا يدعم الإشعارات.");
+                    }
+                    return; // exit early, rely on promise to apply
+                } else {
+                    // Turn off requested
+                    settings.notif = false;
+                }
+            } else {
+                settings[key] = !settings[key];
+            }
+
             localStorage.setItem('myNotebookSettings', JSON.stringify(settings));
             applySettings();
         }
@@ -1473,6 +1463,54 @@
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
             }
         }
+
+        // -------------------------
+        // Notification Logic Scheduler
+        // -------------------------
+        setInterval(() => {
+            if (!settings.notif) return;
+            if (Notification.permission !== "granted") return;
+
+            const now = new Date();
+            const currentHours = now.getHours();
+            const currentMinutes = now.getMinutes();
+            const currentTotalMinutes = currentHours * 60 + currentMinutes;
+
+            let tasksChanged = false;
+
+            tasks.forEach(task => {
+                if (task.completed || task.notified || task.time === 'بدون وقت') return;
+
+                const [taskHoursStr, taskMinutesStr] = task.time.split(':');
+                const taskHours = parseInt(taskHoursStr, 10);
+                const taskMinutes = parseInt(taskMinutesStr, 10);
+
+                if (isNaN(taskHours) || isNaN(taskMinutes)) return;
+
+                const taskTotalMinutes = taskHours * 60 + taskMinutes;
+                const notifBefore = task.notifBefore || 5;
+
+                // Handle midnight wrap-around if task is tomorrow but notification is today (e.g. task at 00:05, now is 23:55)
+                let diff = taskTotalMinutes - currentTotalMinutes;
+                if (diff < -12 * 60) diff += 24 * 60; // if current time is late and task is early morning
+                if (diff > 12 * 60) diff -= 24 * 60;  // if current time is early and task is late night
+
+                if (diff > 0 && diff <= notifBefore) {
+                    // Trigger Notification
+                    new Notification("تنبيه مهمة قريب", {
+                        body: `المهمة "${task.title}" تبدأ بعد ${diff} دقيقة.`,
+                        icon: "apple-touch-icon.png"
+                    });
+                    task.notified = true;
+                    tasksChanged = true;
+                }
+            });
+
+            if (tasksChanged) {
+                saveTasks();
+            }
+        }, 30000); // Check every 30 seconds
+
     </script>
 </body>
 

@@ -175,11 +175,13 @@
             margin: 0 auto;
             width: 100%;
             height: 100%;
-            transform: translateX(100vw);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateX(-100vw);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             z-index: 50;
-            background: #1f2937;
-            /* Solid background for standalone page look */
+            will-change: transform;
+            background: rgba(31, 41, 55, 0.91);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             max-width: 56rem;
             /* Tailwind max-w-4xl */
         }
@@ -800,31 +802,51 @@
         // Swipe to Return (Close Subpage)
         // -------------------------
         let touchStartX = 0;
-        let touchEndX = 0;
+        let touchCurrentX = 0;
+        let isDraggingSubpage = false;
+        let activeSubpageEl = null;
 
         document.addEventListener('touchstart', e => {
             touchStartX = e.changedTouches[0].screenX;
+            activeSubpageEl = document.querySelector('.subpage.active');
+            if (activeSubpageEl) {
+                isDraggingSubpage = true;
+                activeSubpageEl.style.transition = 'none';
+            }
+        }, { passive: true });
+
+        document.addEventListener('touchmove', e => {
+            if (!isDraggingSubpage || !activeSubpageEl) return;
+            touchCurrentX = e.changedTouches[0].screenX;
+            const deltaX = touchStartX - touchCurrentX;
+            
+            // Swiping towards the left (RTL back gesture)
+            if (deltaX > 0) {
+                activeSubpageEl.style.transform = `translateX(${-deltaX}px)`;
+            } else {
+                activeSubpageEl.style.transform = `translateX(0px)`;
+            }
         }, { passive: true });
 
         document.addEventListener('touchend', e => {
-            touchEndX = e.changedTouches[0].screenX;
-            handleSwipe();
-        }, { passive: true });
+            if (!isDraggingSubpage || !activeSubpageEl) return;
+            isDraggingSubpage = false;
 
-        function handleSwipe() {
-            // Right-to-Left swipe (swipe direction leftwards)
-            // It means touchStartX must be significantly larger than touchEndX
+            const touchEndX = e.changedTouches[0].screenX;
+            const deltaX = touchStartX - touchEndX;
+            const SWIPE_THRESHOLD = 100;
 
-            const SWIPE_THRESHOLD = 50;
-            if (touchStartX - touchEndX > SWIPE_THRESHOLD) {
-                // Determine if a subpage is active
-                const activeSubpage = document.querySelector('.subpage.active');
-                if (activeSubpage) {
-                    const subId = activeSubpage.id.replace('subpage-', '');
-                    closeSubpage(subId);
-                }
+            activeSubpageEl.style.transition = ''; // restore transition
+
+            if (deltaX > SWIPE_THRESHOLD) {
+                const subId = activeSubpageEl.id.replace('subpage-', '');
+                activeSubpageEl.style.transform = '';
+                closeSubpage(subId);
+            } else {
+                activeSubpageEl.style.transform = ''; // snap back using CSS transition
             }
-        }
+            activeSubpageEl = null;
+        }, { passive: true });
 
         // -------------------------
         // Date Generators

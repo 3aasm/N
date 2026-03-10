@@ -8,6 +8,13 @@
     <meta name="theme-color" content="#1f2937">
     <title>مفكرتي - My Notebook</title>
 
+    <!-- PWA / Apple Touch Icon Support -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="مفكرتي">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="apple-touch-icon.png">
+
     <!-- Google Fonts: Tajawal -->
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 
@@ -510,12 +517,18 @@
 
     <!-- SUBPAGE: Tasks Archive -->
     <div id="subpage-tasks-archive" class="subpage px-6 pb-32 pt-10 sm:border-x sm:border-white/10 overflow-y-auto">
-        <div class="flex items-center gap-4 mb-8">
-            <button onclick="closeSubpage('tasks-archive')"
-                class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex justify-center items-center text-gray-400 hover:text-white active:scale-95 transition-all">
-                <i class="fa-solid fa-arrow-right"></i>
+        <div class="flex justify-between items-center mb-8">
+            <div class="flex items-center gap-4">
+                <button onclick="closeSubpage('tasks-archive')"
+                    class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex justify-center items-center text-gray-400 hover:text-white active:scale-95 transition-all">
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+                <h2 class="text-xl font-bold text-white tracking-wide">أرشيف المهام المنجزة</h2>
+            </div>
+            <button onclick="deleteAllArchivedTasks()"
+                class="text-xs font-bold text-red-400 hover:text-red-300 drop-shadow-[0_0_5px_rgba(239,68,68,0.4)] px-3 py-2 bg-red-500/10 rounded-lg border border-red-500/20 active:scale-95 transition-all flex items-center gap-2">
+                <i class="fa-solid fa-trash-can"></i> حذف الكل
             </button>
-            <h2 class="text-xl font-bold text-white tracking-wide">أرشيف المهام المنجزة</h2>
         </div>
 
         <div id="archived-tasks-list" class="flex flex-col gap-3">
@@ -526,12 +539,18 @@
 
     <!-- SUBPAGE: Notes Archive -->
     <div id="subpage-notes-archive" class="subpage px-6 pb-32 pt-10 sm:border-x sm:border-white/10 overflow-y-auto">
-        <div class="flex items-center gap-4 mb-8 border-b border-white/10 pb-4">
-            <button onclick="closeSubpage('notes-archive')"
-                class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex justify-center items-center text-gray-400 hover:text-white active:scale-95 transition-all">
-                <i class="fa-solid fa-arrow-right"></i>
+        <div class="flex justify-between items-center mb-8 border-b border-white/10 pb-4">
+            <div class="flex items-center gap-4">
+                <button onclick="closeSubpage('notes-archive')"
+                    class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex justify-center items-center text-gray-400 hover:text-white active:scale-95 transition-all">
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+                <h2 class="text-xl font-bold text-white tracking-wide">أرشيف الملاحظات</h2>
+            </div>
+            <button onclick="deleteAllArchivedNotes()"
+                class="text-xs font-bold text-red-400 hover:text-red-300 drop-shadow-[0_0_5px_rgba(239,68,68,0.4)] px-3 py-2 bg-red-500/10 rounded-lg border border-red-500/20 active:scale-95 transition-all flex items-center gap-2">
+                <i class="fa-solid fa-trash-can"></i> حذف الكل
             </button>
-            <h2 class="text-xl font-bold text-white tracking-wide">أرشيف الملاحظات</h2>
         </div>
 
         <div id="archived-notes-list" class="flex flex-col gap-3">
@@ -762,6 +781,18 @@
             });
         }
 
+        function deleteAllArchivedTasks() {
+            const archivedCount = tasks.filter(t => t.completed).length;
+            if (archivedCount === 0) {
+                alert('لا توجد مهام في الأرشيف لحذفها.');
+                return;
+            }
+            customConfirm('هل أنت متأكد من حذف جميع المهام المنجزة نهائياً؟', () => {
+                tasks = tasks.filter(t => !t.completed);
+                saveTasks();
+            });
+        }
+
         // -------------------------
         // Core: Notes
         // -------------------------
@@ -853,6 +884,18 @@
             if (event) event.stopPropagation();
             customConfirm('هل أنت متأكد من حذف الملاحظة نهائياً؟', () => {
                 notes = notes.filter(n => n.id !== id);
+                saveNotesData();
+            });
+        }
+
+        function deleteAllArchivedNotes() {
+            const archivedCount = notes.filter(n => n.archived).length;
+            if (archivedCount === 0) {
+                alert('لا توجد ملاحظات في الأرشيف لحذفها.');
+                return;
+            }
+            customConfirm('هل أنت متأكد من حذف جميع الملاحظات في الأرشيف نهائياً؟', () => {
+                notes = notes.filter(n => !n.archived);
                 saveNotesData();
             });
         }

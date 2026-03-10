@@ -159,7 +159,7 @@
             margin: 0 auto;
             width: 100%;
             height: 100%;
-            transform: translateY(100%);
+            transform: translateX(100%);
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             z-index: 50;
             background: #1f2937;
@@ -169,7 +169,7 @@
         }
 
         .subpage.active {
-            transform: translateY(0);
+            transform: translateX(0);
         }
     </style>
 </head>
@@ -576,40 +576,39 @@
         </div>
     </div>
 
-    <!-- Modal: Add/Edit/View Note -->
-    <div id="addNoteModal"
-        class="fixed inset-0 z-50 hidden flex-col justify-end sm:justify-center items-center backdrop-blur-md bg-gray-900/80 transition-opacity duration-300 opacity-0 sm:overflow-hidden">
-        <div class="absolute inset-0 z-0 cursor-pointer" onclick="closeNoteModal()"></div>
-
-        <div id="noteModalContent"
-            class="glass-panel bg-gray-800 w-full sm:w-[450px] rounded-t-3xl sm:rounded-3xl p-6 relative z-10 transform translate-y-full sm:translate-y-0 sm:scale-95 transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] border-t border-emerald-500/30 flex flex-col h-[80vh] sm:h-auto">
-            <div class="w-12 h-1.5 flex-shrink-0 bg-white/20 rounded-full mx-auto mb-4 sm:hidden cursor-pointer"
-                onclick="closeNoteModal()"></div>
-
-            <div class="flex justify-between items-center mb-4">
+    <!-- SUBPAGE: Add/Edit/View Note -->
+    <div id="subpage-note-editor"
+        class="subpage px-6 pb-32 pt-10 sm:border-x sm:border-white/10 overflow-y-auto flex flex-col">
+        <div class="flex items-center justify-between mb-8 border-b border-white/10 pb-4 shrink-0">
+            <div class="flex items-center gap-4 w-full">
+                <button onclick="closeNoteModal()"
+                    class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex justify-center items-center text-gray-400 hover:text-white active:scale-95 transition-all shrink-0">
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
                 <input type="text" id="currentNoteTitle" placeholder="عنوان الملاحظة (اختياري)"
                     class="bg-transparent border-none text-xl font-bold text-emerald-400 placeholder-emerald-400/50 focus:outline-none w-full">
-                <!-- Check button to archive -->
-                <button id="archive-note-btn" onclick="archiveCurrentNote()"
-                    class="hidden w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500 hover:text-gray-900 active:scale-95 transition-all shrink-0 flex items-center justify-center transform tooltip"
-                    title="إرسال للأرشيف">
-                    <i class="fa-solid fa-check text-lg"></i>
-                </button>
             </div>
 
-            <textarea id="currentNoteContent" placeholder="اكتب ملاحظاتك بحرية هنا..."
-                class="flex-1 w-full bg-white/[0.03] border border-white/10 rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/30 transition-all resize-none mb-4"></textarea>
+            <!-- Check button to archive -->
+            <button id="archive-note-btn" onclick="archiveCurrentNote()"
+                class="hidden w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500 hover:text-gray-900 active:scale-95 transition-all shrink-0 flex items-center justify-center transform tooltip mr-2"
+                title="إكمال وإرسال للأرشيف">
+                <i class="fa-solid fa-check text-lg"></i>
+            </button>
+        </div>
 
-            <div class="flex justify-between gap-3">
-                <button id="delete-note-btn" onclick="deleteCurrentNote()"
-                    class="hidden w-12 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white border border-red-500/20 rounded-xl transition-all active:scale-95 flex items-center justify-center">
-                    <i class="fa-solid fa-trash-can"></i>
-                </button>
-                <button onclick="saveCurrentNote()"
-                    class="flex-1 bg-emerald-500 hover:bg-emerald-400 text-gray-900 font-bold text-lg py-3 rounded-xl transition-all shadow-sm active:scale-95">
-                    حفظ الملاحظة
-                </button>
-            </div>
+        <textarea id="currentNoteContent" placeholder="اكتب ملاحظاتك بحرية هنا..."
+            class="flex-1 w-full bg-white/[0.03] border border-white/10 rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/30 transition-all resize-none mb-6"></textarea>
+
+        <div class="flex justify-between gap-3 shrink-0">
+            <button id="delete-note-btn" onclick="deleteCurrentNote()"
+                class="hidden w-14 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white border border-red-500/20 rounded-xl transition-all active:scale-95 flex items-center justify-center">
+                <i class="fa-solid fa-trash-can"></i>
+            </button>
+            <button onclick="saveCurrentNote()"
+                class="flex-1 bg-emerald-500 hover:bg-emerald-400 text-gray-900 font-bold text-lg py-4 rounded-xl transition-all shadow-sm active:scale-95">
+                حفظ الملاحظة
+            </button>
         </div>
     </div>
 
@@ -1020,8 +1019,6 @@
 
         function openNoteModal(noteId = null) {
             currentEditingNoteId = noteId;
-            const modal = document.getElementById('addNoteModal');
-            const cont = document.getElementById('noteModalContent');
 
             const titleInput = document.getElementById('currentNoteTitle');
             const contentInput = document.getElementById('currentNoteContent');
@@ -1043,25 +1040,13 @@
                 delBtn.classList.add('hidden');
             }
 
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            requestAnimationFrame(() => {
-                modal.classList.remove('opacity-0');
-                cont.classList.remove('translate-y-full', 'sm:scale-95');
-                cont.classList.add('translate-y-0', 'sm:scale-100');
-            });
+            openSubpage('note-editor');
             setTimeout(() => contentInput.focus(), 300);
         }
 
         function closeNoteModal() {
-            const modal = document.getElementById('addNoteModal');
-            const cont = document.getElementById('noteModalContent');
-            modal.classList.add('opacity-0');
-            cont.classList.remove('translate-y-0', 'sm:scale-100');
-            cont.classList.add('translate-y-full', 'sm:scale-95');
+            closeSubpage('note-editor');
             setTimeout(() => {
-                modal.classList.remove('flex');
-                modal.classList.add('hidden');
                 currentEditingNoteId = null;
             }, 300);
         }

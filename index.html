@@ -656,7 +656,7 @@
 
         <div id="taskModalContent"
             class="glass-panel bg-gray-800 w-full sm:w-[400px] rounded-t-3xl sm:rounded-3xl p-7 relative z-10 transform translate-y-full sm:translate-y-0 sm:scale-95 transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] border-t border-emerald-500/30 flex flex-col">
-            <div class="w-12 h-1.5 flex-shrink-0 bg-white/20 rounded-full mx-auto mb-6 sm:hidden cursor-pointer"
+            <div id="task-modal-handle" class="w-12 h-1.5 flex-shrink-0 bg-white/20 rounded-full mx-auto mb-6 sm:hidden cursor-pointer"
                 onclick="closeTaskModal()"></div>
 
             <h2 class="text-2xl font-bold text-white mb-6 tracking-wide drop-shadow-sm">إضافة <span
@@ -1657,12 +1657,22 @@
         function closeTaskModal() {
             const modal = document.getElementById('addTaskModal');
             const cont = document.getElementById('taskModalContent');
+            
+            modal.style.transition = 'opacity 0.3s ease-out';
             modal.classList.add('opacity-0');
-            cont.classList.remove('translate-y-0', 'sm:scale-100');
-            cont.classList.add('translate-y-full', 'sm:scale-95');
+            
+            cont.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+            cont.style.transform = 'translateY(100%)';
+
             setTimeout(() => {
                 modal.classList.remove('flex');
                 modal.classList.add('hidden');
+                
+                // Reset styles for next open
+                cont.style.transform = '';
+                cont.style.transition = '';
+                modal.style.opacity = '';
+                modal.style.transition = '';
 
                 // Clear inputs if closed without saving
                 document.getElementById('newTaskTitle').value = '';
@@ -1672,6 +1682,52 @@
                 currentEditingTaskId = null;
             }, 300);
         }
+
+        // Modal Swipe-to-Close
+        (function initModalSwipe() {
+            const cont = document.getElementById('taskModalContent');
+            const modal = document.getElementById('addTaskModal');
+            let startY = 0;
+            let currentY = 0;
+            let isSwiping = false;
+
+            cont.addEventListener('touchstart', (e) => {
+                if (window.innerWidth >= 640) return; // Only mobile
+                startY = e.touches[0].clientY;
+                cont.style.transition = 'none';
+                modal.style.transition = 'none';
+            }, { passive: true });
+
+            cont.addEventListener('touchmove', (e) => {
+                if (window.innerWidth >= 640) return;
+                currentY = e.touches[0].clientY;
+                const deltaY = currentY - startY;
+
+                if (deltaY > 0) {
+                    isSwiping = true;
+                    cont.style.transform = `translateY(${deltaY}px)`;
+                    // Dim backdrop opacity
+                    const progress = Math.min(deltaY / 400, 1);
+                    modal.style.opacity = (1 - progress * 0.6).toString();
+                }
+            }, { passive: true });
+
+            cont.addEventListener('touchend', () => {
+                if (!isSwiping) return;
+                isSwiping = false;
+                const deltaY = currentY - startY;
+
+                if (deltaY > 120) {
+                    closeTaskModal();
+                } else {
+                    // Snap back
+                    cont.style.transition = 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)';
+                    modal.style.transition = 'opacity 0.3s ease-out';
+                    cont.style.transform = 'translateY(0)';
+                    modal.style.opacity = '1';
+                }
+            });
+        })();
 
         function openNoteModal(noteId = null) {
             currentEditingNoteId = noteId;

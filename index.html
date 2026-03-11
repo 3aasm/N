@@ -823,6 +823,8 @@
             if (activeSubpageEl) {
                 if (isAtRightEdge) {
                     activeSubpageEl.style.transition = 'none';
+                    const mainEl = document.querySelector('main');
+                    if (mainEl) mainEl.style.transition = 'none';
                 } else {
                     activeSubpageEl = null; // Do not allow swipe if not at edge
                 }
@@ -857,6 +859,17 @@
                 // Swiping towards the left (RTL back gesture)
                 if (deltaX > 0) {
                     activeSubpageEl.style.transform = `translateX(${-deltaX}px)`;
+
+                    // Coordinated animation for background
+                    const mainEl = document.querySelector('main');
+                    if (mainEl) {
+                        const progress = Math.min(deltaX / window.innerWidth, 1);
+                        const scale = 0.95 + (progress * 0.05);
+                        const translateX = 20 * (1 - progress);
+                        const brightness = 0.7 + (progress * 0.3);
+                        mainEl.style.transform = `scale(${scale}) translateX(${translateX}px)`;
+                        mainEl.style.filter = `brightness(${brightness})`;
+                    }
                 } else {
                     activeSubpageEl.style.transform = `translateX(0px)`;
                 }
@@ -876,13 +889,23 @@
                 const SWIPE_THRESHOLD = 100;
 
                 activeSubpageEl.style.transition = ''; // restore transition
+                const mainEl = document.querySelector('main');
+                if (mainEl) mainEl.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
 
                 if (deltaX > SWIPE_THRESHOLD) {
                     const subId = activeSubpageEl.id.replace('subpage-', '');
                     activeSubpageEl.style.transform = '';
+                    if (mainEl) {
+                        mainEl.style.transform = 'scale(1) translateX(0)';
+                        mainEl.style.filter = 'brightness(1)';
+                    }
                     closeSubpage(subId);
                 } else {
                     activeSubpageEl.style.transform = ''; // snap back using CSS transition
+                    if (mainEl) {
+                        mainEl.style.transform = 'scale(0.95) translateX(20px)';
+                        mainEl.style.filter = 'brightness(0.7)';
+                    }
                 }
             } else {
                 activeSubpageEl.style.transition = '';
@@ -1512,12 +1535,28 @@
 
         function openSubpage(subId) {
             const page = document.getElementById(`subpage-${subId}`);
-            if (page) page.classList.add('active');
+            if (page) {
+                page.classList.add('active');
+                const mainEl = document.querySelector('main');
+                if (mainEl) {
+                    mainEl.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+                    mainEl.style.transform = 'scale(0.95) translateX(20px)';
+                    mainEl.style.filter = 'brightness(0.7)';
+                }
+            }
         }
 
         function closeSubpage(subId) {
             const page = document.getElementById(`subpage-${subId}`);
-            if (page) page.classList.remove('active');
+            if (page) {
+                page.classList.remove('active');
+                const mainEl = document.querySelector('main');
+                if (mainEl) {
+                    mainEl.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+                    mainEl.style.transform = 'scale(1) translateX(0)';
+                    mainEl.style.filter = 'brightness(1)';
+                }
+            }
         }
 
         // -------------------------

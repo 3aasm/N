@@ -804,14 +804,21 @@
         let touchStartX = 0;
         let touchStartY = 0;
         let touchCurrentX = 0;
+        let touchId = null;
         let isDraggingSubpage = false;
         let isSwipeValidated = false;
         let activeSubpageEl = null;
 
         document.addEventListener('touchstart', e => {
-            const x = e.changedTouches[0].clientX;
+            // Already dragging or no subpage active? Ignore.
+            if (touchId !== null) return;
+            
+            const touch = e.changedTouches[0];
+            const x = touch.clientX;
             touchStartX = x;
-            touchStartY = e.changedTouches[0].clientY;
+            touchStartY = touch.clientY;
+            touchId = touch.identifier;
+            
             activeSubpageEl = document.querySelector('.subpage.active');
             isDraggingSubpage = false;
             isSwipeValidated = false;
@@ -826,16 +833,23 @@
                     const mainEl = document.querySelector('main');
                     if (mainEl) mainEl.style.transition = 'none';
                 } else {
-                    activeSubpageEl = null; // Do not allow swipe if not at edge
+                    activeSubpageEl = null; 
+                    touchId = null;
                 }
+            } else {
+                touchId = null;
             }
         }, { passive: true });
 
         document.addEventListener('touchmove', e => {
-            if (!activeSubpageEl) return;
+            if (!activeSubpageEl || touchId === null) return;
 
-            touchCurrentX = e.changedTouches[0].clientX;
-            const touchCurrentY = e.changedTouches[0].clientY;
+            // Find the touch that matches our starting ID
+            const touch = Array.from(e.changedTouches).find(t => t.identifier === touchId);
+            if (!touch) return;
+
+            touchCurrentX = touch.clientX;
+            const touchCurrentY = touch.clientY;
 
             const deltaX = touchStartX - touchCurrentX;
             const deltaY = Math.abs(touchStartY - touchCurrentY);
@@ -848,6 +862,7 @@
                 } else if (deltaY > 10) {
                     // It's a vertical scroll, don't interfere
                     activeSubpageEl = null;
+                    touchId = null;
                     return;
                 }
             }
@@ -877,14 +892,17 @@
         }, { passive: false });
 
         document.addEventListener('touchend', e => {
-            if (!activeSubpageEl) return;
+            if (!activeSubpageEl || touchId === null) return;
+            
+            const touch = Array.from(e.changedTouches).find(t => t.identifier === touchId);
+            if (!touch) return;
 
             const wasDragging = isDraggingSubpage;
             isDraggingSubpage = false;
             isSwipeValidated = false;
 
             if (wasDragging) {
-                const touchEndX = e.changedTouches[0].clientX;
+                const touchEndX = touch.clientX;
                 const deltaX = touchStartX - touchEndX;
                 const SWIPE_THRESHOLD = 100;
 
@@ -912,7 +930,25 @@
             }
 
             activeSubpageEl = null;
+            touchId = null;
         }, { passive: true });
+
+        document.addEventListener('touchcancel', () => {
+             if (activeSubpageEl) {
+                 activeSubpageEl.style.transition = '';
+                 activeSubpageEl.style.transform = '';
+                 const mainEl = document.querySelector('main');
+                 if (mainEl) {
+                     mainEl.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+                     mainEl.style.transform = 'scale(0.95) translateX(20px)';
+                     mainEl.style.filter = 'brightness(0.7)';
+                 }
+             }
+             activeSubpageEl = null;
+             touchId = null;
+             isDraggingSubpage = false;
+             isSwipeValidated = false;
+        });
 
         // -------------------------
         // Date Generators
@@ -1542,6 +1578,7 @@
                     mainEl.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
                     mainEl.style.transform = 'scale(0.95) translateX(20px)';
                     mainEl.style.filter = 'brightness(0.7)';
+                    mainEl.style.pointerEvents = 'none'; // Disable background interaction
                 }
             }
         }
@@ -1555,6 +1592,7 @@
                     mainEl.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
                     mainEl.style.transform = 'scale(1) translateX(0)';
                     mainEl.style.filter = 'brightness(1)';
+                    mainEl.style.pointerEvents = 'auto'; // Restore interaction
                 }
             }
         }

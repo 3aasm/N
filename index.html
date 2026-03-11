@@ -441,10 +441,82 @@
                 transform: translateY(-20px);
             }
         }
+
+        /* Glass Shimmer Splash Screen - Minimalist & Premium */
+        #splash-screen {
+            position: fixed;
+            inset: 0;
+            background: #0f172a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            transition: opacity 0.8s ease-in-out, visibility 0.8s;
+        }
+
+        .shimmer-logo-container {
+            position: relative;
+            width: 160px;
+            height: 160px;
+            border-radius: 3.2rem;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: shimmer-entrance 1s cubic-bezier(0.22, 1, 0.36, 1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .shimmer-logo {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: cover;
+        }
+
+        /* The Light Beam Shimmer */
+        .shimmer-logo-container::after {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -150%;
+            width: 80%;
+            height: 200%;
+            background: linear-gradient(
+                to right,
+                transparent 0%,
+                rgba(255, 255, 255, 0.05) 30%,
+                rgba(255, 255, 255, 0.4) 50%,
+                rgba(255, 255, 255, 0.05) 70%,
+                transparent 100%
+            );
+            transform: rotate(25deg);
+            animation: glass-sweep 1.8s ease-in-out infinite;
+        }
+
+        @keyframes shimmer-entrance {
+            0% { opacity: 0; transform: scale(0.9); filter: blur(10px); }
+            100% { opacity: 1; transform: scale(1); filter: blur(0); }
+        }
+
+        @keyframes glass-sweep {
+            0% { left: -150%; }
+            100% { left: 150%; }
+        }
+
+        .splash-fade-out {
+            opacity: 0 !important;
+            visibility: hidden !important;
+        }
     </style>
 </head>
 
 <body class="antialiased selection:bg-emerald-500/30 selection:text-emerald-200">
+
+    <!-- Glass Shimmer Splash Screen -->
+    <div id="splash-screen">
+        <div class="shimmer-logo-container">
+            <img src="apple-touch-icon.png" alt="Logo" class="shimmer-logo">
+        </div>
+    </div>
 
     <div class="fixed inset-0 z-[-1] pointer-events-none overflow-hidden" id="app-background-container">
         <!-- Optional overlay for blur if needed by background -->
@@ -606,8 +678,7 @@
                     <button onclick="openSubpage('hidden-buttons')"
                         class="flex justify-between items-center border-b border-white/10 pb-5 text-right w-full group active:scale-[0.98] transition-all">
                         <div class="flex gap-3 items-center">
-                            <div
-                                class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 flex justify-center items-center">
+                            <div class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 flex justify-center items-center">
                                 <i class="fa-solid fa-eye-slash"></i>
                             </div>
                             <span class="text-white font-medium">الأزرار المخفية</span>
@@ -2879,6 +2950,21 @@
                 saveTasks();
             }
         }, 30000); // Check every 30 seconds
+
+        // Glass Shimmer Splash Screen Management
+        window.addEventListener('DOMContentLoaded', () => {
+            const splash = document.getElementById('splash-screen');
+            if (!splash) return;
+
+            // Faster timing for a cleaner, premium feel
+            setTimeout(() => {
+                splash.classList.add('splash-fade-out');
+                
+                setTimeout(() => {
+                    splash.remove();
+                }, 800);
+            }, 1800);
+        });
 
     </script>
 </body>

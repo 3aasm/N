@@ -183,11 +183,237 @@
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             max-width: 56rem;
-            /* Tailwind max-w-4xl */
         }
 
         .subpage.active {
             transform: translateX(0);
+        }
+
+        /* Note Toolbar */
+        .note-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            overflow-x: auto;
+            scrollbar-width: none;
+            z-index: 30;
+            transition: all 0.3s ease;
+        }
+
+        .note-toolbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .toolbar-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.75rem;
+            background: transparent;
+            border: 1px solid transparent;
+            color: rgba(255, 255, 255, 0.6);
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .toolbar-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .toolbar-btn.active {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: rgba(16, 185, 129, 0.4);
+            color: #10b981;
+        }
+
+        /* Responsive Toolbar Positioning */
+        @media (max-width: 639px) {
+            .note-toolbar {
+                position: fixed;
+                bottom: 2rem;
+                left: 1rem;
+                right: 1rem;
+                justify-content: center;
+            }
+
+            .note-editor-header {
+                padding-bottom: 2rem;
+            }
+        }
+
+        @media (min-width: 640px) {
+            .note-toolbar {
+                margin-bottom: 1.5rem;
+            }
+        }
+
+        .editor-container [contenteditable]:empty:before {
+            content: attr(data-placeholder);
+            color: #6b7280;
+            cursor: text;
+        }
+
+        /* Color Palette UI */
+        .color-palette-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .color-palette-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .palette-card {
+            background: #1f2937;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 2rem;
+            padding: 1.5rem;
+            width: 90%;
+            max-width: 320px;
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .color-palette-overlay.active .palette-card {
+            transform: scale(1);
+        }
+
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .color-circle {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .color-circle:hover {
+            transform: scale(1.1);
+            border-color: white;
+        }
+
+        .color-circle.active::after {
+            content: '\f00c';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Note Background Icon Styles */
+        .icon-picker-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(15px);
+            z-index: 150;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .icon-picker-overlay.active {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+        .icon-card {
+            background: #111827;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 3rem;
+            padding: 2.5rem;
+            width: 90%;
+            max-width: 380px;
+            transform: translateY(40px) scale(0.9);
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+        }
+        .icon-picker-overlay.active .icon-card {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+        .icon-select-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        .selectable-icon {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 1.5rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 2rem;
+            color: rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transform: scale(0.5);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .icon-picker-overlay.active .selectable-icon {
+            transform: scale(1);
+            opacity: 1;
+        }
+        .selectable-icon:hover {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: rgba(16, 185, 129, 0.4);
+            color: #10b981;
+            transform: translateY(-8px) scale(1.05) !important;
+        }
+        .selectable-icon.active {
+            background: #10b981;
+            border-color: #10b981;
+            color: #064e3b;
+            box-shadow: 0 15px 30px -5px rgba(16, 185, 129, 0.5);
+        }
+
+        .note-bg-preview {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 20rem;
+            color: rgba(16, 185, 129, 0.04);
+            pointer-events: none;
+            z-index: -1;
+            transition: all 0.5s ease;
         }
     </style>
 </head>
@@ -743,21 +969,118 @@
 
     <!-- SUBPAGE: Add/Edit/View Note -->
     <div id="subpage-note-editor"
-        class="subpage px-6 pb-32 sm:border-x sm:border-white/10 overflow-y-auto overscroll-none flex flex-col">
-        <div
-            class="sticky top-0 z-20 bg-gray-900/20 backdrop-blur-[4px] -mx-6 px-6 pt-10 pb-4 mb-4 border-b border-white/10 flex items-center justify-between shrink-0">
-            <div class="flex items-center gap-4 w-full">
-                <button onclick="closeNoteModal()"
-                    class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex justify-center items-center text-gray-400 hover:text-white active:scale-95 transition-all shrink-0">
-                    <i class="fa-solid fa-arrow-right"></i>
-                </button>
-                <input type="text" id="currentNoteTitle" placeholder="عنوان الملاحظة (اختياري)" oninput="autoSaveNote()"
-                    class="bg-transparent border-none text-xl font-bold text-emerald-400 placeholder-emerald-400/50 focus:outline-none w-full">
+        class="subpage px-6 pb-40 sm:border-x sm:border-white/10 overflow-y-auto overscroll-none flex flex-col">
+
+        <!-- PC Toolbar View -->
+        <div class="hidden sm:flex shrink-0 pt-8 justify-center">
+            <div class="note-toolbar" id="toolbar-pc">
+                <button class="toolbar-btn" onmousedown="event.preventDefault()" onclick="adjustFontSize(1)"
+                    title="تكبير الخط"><i class="fa-solid fa-plus-circle"></i></button>
+                <button class="toolbar-btn" onmousedown="event.preventDefault()" onclick="adjustFontSize(-1)"
+                    title="تصغير الخط"><i class="fa-solid fa-minus-circle"></i></button>
+                <div class="w-px h-6 bg-white/10 mx-1"></div>
+                <button id="btn-bold" class="toolbar-btn" onmousedown="event.preventDefault()"
+                    onclick="formatDoc('bold')" title="غامق"><i class="fa-solid fa-bold"></i></button>
+                <button id="btn-italic" class="toolbar-btn" onmousedown="event.preventDefault()"
+                    onclick="formatDoc('italic')" title="مائل"><i class="fa-solid fa-italic"></i></button>
+                <button id="btn-underline" class="toolbar-btn" onmousedown="event.preventDefault()"
+                    onclick="formatDoc('underline')" title="تسطير"><i class="fa-solid fa-underline"></i></button>
+                <div class="w-px h-6 bg-white/10 mx-1"></div>
+                <button id="btn-alignRight" class="toolbar-btn" onmousedown="event.preventDefault()"
+                    onclick="formatDoc('justifyRight')" title="يمين"><i class="fa-solid fa-align-right"></i></button>
+                <button id="btn-alignCenter" class="toolbar-btn" onmousedown="event.preventDefault()"
+                    onclick="formatDoc('justifyCenter')" title="توسيط"><i class="fa-solid fa-align-center"></i></button>
+                <button id="btn-alignLeft" class="toolbar-btn" onmousedown="event.preventDefault()"
+                    onclick="formatDoc('justifyLeft')" title="يسار"><i class="fa-solid fa-align-left"></i></button>
+                <div class="w-px h-6 bg-white/10 mx-1"></div>
+                <button class="toolbar-btn" onclick="openColorPalette()" title="الألوان"><i
+                        class="fa-solid fa-palette"></i></button>
             </div>
         </div>
 
-        <textarea id="currentNoteContent" placeholder="اكتب ملاحظاتك بحرية هنا..." oninput="autoSaveNote()"
-            class="flex-1 w-full bg-transparent border-none p-4 text-white placeholder-gray-500 focus:outline-none resize-none mb-6 text-lg leading-relaxed"></textarea>
+        <div
+            class="sticky top-0 z-20 bg-gray-900/10 backdrop-blur-[2px] -mx-6 px-6 pt-10 pb-4 mb-2 flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-4 w-full flex-row-reverse">
+                <!-- Save & Exit Button on the Left -->
+                <button onclick="closeNoteModal()"
+                    class="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex justify-center items-center text-emerald-400 hover:bg-emerald-500 hover:text-gray-900 active:scale-95 transition-all shrink-0 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+                    <i class="fa-solid fa-circle-check text-2xl"></i>
+                </button>
+
+                <!-- Background Icon Trigger -->
+                <button onclick="openIconPicker()"
+                    class="w-11 h-11 rounded-full bg-white/5 border border-white/10 flex justify-center items-center text-gray-400 hover:text-white hover:bg-white/10 active:scale-95 transition-all shrink-0">
+                    <i class="fa-solid fa-icons text-xl"></i>
+                </button>
+
+                <input type="text" id="currentNoteTitle" placeholder="عنوان الملاحظة الراقية..."
+                    oninput="autoSaveNote()"
+                    class="bg-transparent border-none text-2xl font-black text-white placeholder-white/20 focus:outline-none w-full text-right tracking-tight">
+            </div>
+        </div>
+
+        <!-- Integrated Editor -->
+        <div class="editor-container flex-1 flex flex-col overflow-hidden relative">
+            <div id="noteEditorBgIcon" class="note-bg-preview"></div>
+            <div id="currentNoteContent" contenteditable="true" data-placeholder="اكتب أفكارك بجمالية هنا..."
+                oninput="handleEditorInput()" onkeyup="updateToolbarState()" onclick="updateToolbarState()"
+                class="flex-1 w-full bg-transparent border-none p-4 pb-32 text-white/90 placeholder-gray-500 focus:outline-none text-lg leading-relaxed text-right min-h-[300px] overflow-y-auto break-words [overflow-wrap:anywhere] [word-break:break-word]">
+            </div>
+        </div>
+
+        <!-- Mobile Toolbar View -->
+        <div class="sm:hidden flex justify-center">
+            <div class="note-toolbar" id="toolbar-mobile">
+                <button class="toolbar-btn" onmousedown="event.preventDefault()" onclick="adjustFontSize(1)"
+                    title="تكبير الخط"><i class="fa-solid fa-plus-circle"></i></button>
+                <button class="toolbar-btn" onmousedown="event.preventDefault()" onclick="adjustFontSize(-1)"
+                    title="تصغير الخط"><i class="fa-solid fa-minus-circle"></i></button>
+                <div class="w-px h-6 bg-white/10 mx-1"></div>
+                <button id="btn-bold-m" class="toolbar-btn" onmousedown="event.preventDefault()"
+                    onclick="formatDoc('bold')" title="غامق"><i class="fa-solid fa-bold"></i></button>
+                <button id="btn-italic-m" class="toolbar-btn" onmousedown="event.preventDefault()"
+                    onclick="formatDoc('italic')" title="مائل"><i class="fa-solid fa-italic"></i></button>
+                <div class="w-px h-6 bg-white/10 mx-1"></div>
+                <button id="btn-alignRight-m" class="toolbar-btn" onmousedown="event.preventDefault()"
+                    onclick="formatDoc('justifyRight')" title="يمين"><i class="fa-solid fa-align-right"></i></button>
+                <button id="btn-alignCenter-m" class="toolbar-btn" onmousedown="event.preventDefault()"
+                    onclick="formatDoc('justifyCenter')" title="توسيط"><i class="fa-solid fa-align-center"></i></button>
+                <button id="btn-alignLeft-m" class="toolbar-btn" onmousedown="event.preventDefault()"
+                    onclick="formatDoc('justifyLeft')" title="يسار"><i class="fa-solid fa-align-left"></i></button>
+                <div class="w-px h-6 bg-white/10 mx-1"></div>
+                <button class="toolbar-btn" onclick="openColorPalette()" title="الألوان"><i
+                        class="fa-solid fa-palette"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Color Palette Modal -->
+    <div id="paletteOverlay" class="color-palette-overlay" onclick="closeColorPalette(event)">
+        <div class="palette-card" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-white font-bold">اختر لون النص</h3>
+                <button onclick="closeColorPalette()" class="text-gray-400 hover:text-white"><i
+                        class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="color-grid" id="note-color-grid">
+                <!-- Preset Colors -->
+                <div class="color-circle" style="background: white" onclick="selectPaletteColor('#ffffff')"></div>
+                <div class="color-circle" style="background: #9ca3af" onclick="selectPaletteColor('#9ca3af')"></div>
+                <div class="color-circle" style="background: #ef4444" onclick="selectPaletteColor('#ef4444')"></div>
+                <div class="color-circle" style="background: #f59e0b" onclick="selectPaletteColor('#f59e0b')"></div>
+                <div class="color-circle" style="background: #10b981" onclick="selectPaletteColor('#10b981')"></div>
+                <div class="color-circle" style="background: #3b82f6" onclick="selectPaletteColor('#3b82f6')"></div>
+                <div class="color-circle" style="background: #8b5cf6" onclick="selectPaletteColor('#8b5cf6')"></div>
+                <div class="color-circle" style="background: #ec4899" onclick="selectPaletteColor('#ec4899')"></div>
+            </div>
+            <div class="mt-6 pt-4 border-t border-white/10">
+                <label class="flex items-center justify-between cursor-pointer group">
+                    <span class="text-xs text-gray-400 group-hover:text-white transition-colors">لون مخصص...</span>
+                    <input type="color" oninput="selectPaletteColor(this.value)"
+                        class="w-8 h-8 rounded-lg bg-transparent border-none cursor-pointer">
+                </label>
+            </div>
+        </div>
     </div>
 
     <!-- Modal: Custom Confirm -->
@@ -780,6 +1103,29 @@
                     class="flex-1 bg-red-500 hover:bg-red-400 text-white font-bold py-3 rounded-xl transition-all shadow-[0_0_15px_rgba(239,68,68,0.3)] active:scale-95">
                     نعم، متأكد
                 </button>
+            </div>
+        </div>
+    </div>
+    <!-- Note Icon Picker Modal -->
+    <div id="iconPickerOverlay" class="icon-picker-overlay" onclick="closeIconPicker(event)">
+        <div class="icon-card" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-6">
+                <button onclick="closeIconPicker()" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark"></i></button>
+                <h3 class="text-white text-xl font-black tracking-tight">خلفية الملاحظة</h3>
+            </div>
+            
+            <p class="text-gray-400 text-sm text-center px-4">اختر أيقونة لتمثيل طابع هذه الملاحظة في الخلفية</p>
+            
+            <div class="icon-select-grid" id="note-icon-grid">
+                <div class="selectable-icon" data-icon="fa-fire" onclick="selectNoteIcon('fa-fire')"><i class="fa-solid fa-fire"></i></div>
+                <div class="selectable-icon" data-icon="fa-heart" onclick="selectNoteIcon('fa-heart')"><i class="fa-solid fa-heart"></i></div>
+                <div class="selectable-icon" data-icon="fa-star" onclick="selectNoteIcon('fa-star')"><i class="fa-solid fa-star"></i></div>
+                <div class="selectable-icon" data-icon="fa-cloud" onclick="selectNoteIcon('fa-cloud')"><i class="fa-solid fa-cloud"></i></div>
+                <div class="selectable-icon" data-icon="fa-ghost" onclick="selectNoteIcon('fa-ghost')"><i class="fa-solid fa-ghost"></i></div>
+                <div class="selectable-icon" data-icon="fa-rocket" onclick="selectNoteIcon('fa-rocket')"><i class="fa-solid fa-rocket"></i></div>
+                <div class="selectable-icon col-span-3 aspect-auto py-3 mt-2" onclick="selectNoteIcon(null)">
+                    <span class="text-sm font-bold">بدون أيقونة</span>
+                </div>
             </div>
         </div>
     </div>
@@ -1173,11 +1519,163 @@
         // -------------------------
         // Core: Notes
         // -------------------------
+        let currentFontSize = 3; // Default intermediate size
+        const fontSizeMap = {
+            1: '0.65rem',
+            2: '0.85rem',
+            3: '1.125rem',
+            4: '1.5rem',
+            5: '2.25rem',
+            6: '3.5rem',
+            7: '5rem'
+        };
+
+        function formatDoc(cmd, val) {
+            document.execCommand(cmd, false, val);
+            document.getElementById('currentNoteContent').focus();
+            updateToolbarState();
+        }
+
+        function adjustFontSize(delta) {
+            currentFontSize = Math.max(1, Math.min(7, currentFontSize + delta));
+
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0 && selection.toString().length > 0) {
+                // Apply to selection via execCommand
+                formatDoc('fontSize', currentFontSize);
+            } else {
+                // Apply to the whole page/editor if no selection
+                const editor = document.getElementById('currentNoteContent');
+                editor.style.fontSize = fontSizeMap[currentFontSize];
+                updateToolbarState();
+            }
+        }
+
+        function openColorPalette() {
+            document.getElementById('paletteOverlay').classList.add('active');
+        }
+
+        function closeColorPalette(event) {
+            if (!event || event.target === document.getElementById('paletteOverlay') || event.target.closest('button')) {
+                document.getElementById('paletteOverlay').classList.remove('active');
+            }
+        }
+
+        function selectPaletteColor(color) {
+            formatDoc('foreColor', color);
+            // Mark as active in UI
+            document.querySelectorAll('.color-circle').forEach(c => {
+                c.classList.toggle('active', c.style.backgroundColor === color ||
+                    (color.startsWith('#') && rgbToHex(c.style.backgroundColor) === color.toLowerCase()));
+            });
+            setTimeout(closeColorPalette, 200);
+        }
+
+        function rgbToHex(rgb) {
+            if (!rgb) return "";
+            const match = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+            if (!match) return rgb;
+            const r = parseInt(match[1]);
+            const g = parseInt(match[2]);
+            const b = parseInt(match[3]);
+            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        }
+
+        function updateToolbarState() {
+            const commands = ['bold', 'italic', 'underline'];
+            commands.forEach(cmd => {
+                const isActive = document.queryCommandState(cmd);
+                const btnPC = document.getElementById('btn-' + cmd);
+                const btnM = document.getElementById('btn-' + cmd + '-m');
+                if (btnPC) btnPC.classList.toggle('active', isActive);
+                if (btnM) btnM.classList.toggle('active', isActive);
+            });
+
+            // Alignment state (Right, Center, Left)
+            const alignments = ['justifyRight', 'justifyCenter', 'justifyLeft'];
+            alignments.forEach(cmd => {
+                // queryCommandState handles alignment commands in most browsers
+                const isActive = document.queryCommandState(cmd);
+                let baseId = cmd.replace('justify', 'align');
+
+                const btnPC = document.getElementById('btn-' + baseId);
+                const btnM = document.getElementById('btn-' + baseId + '-m');
+
+                if (btnPC) btnPC.classList.toggle('active', isActive);
+                if (btnM) btnM.classList.toggle('active', isActive);
+            });
+        }
+
+        function handleEditorInput() {
+            autoSaveNote();
+            detectAndApplyLanguageDirection();
+        }
+
+        function detectAndApplyLanguageDirection() {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                const container = range.commonAncestorContainer;
+                const node = container.nodeType === 3 ? container.parentNode : container;
+
+                // Get the text of the current block
+                const text = node.innerText || node.textContent || "";
+
+                // If it's a new line or start of text, and no alignment is explicitly set
+                const isArabic = /[\u0600-\u06FF]/.test(text.trim().charAt(0));
+                const isEnglish = /[a-zA-Z]/.test(text.trim().charAt(0));
+
+                if (isArabic && !document.queryCommandState('justifyRight')) {
+                    document.execCommand('justifyRight', false, null);
+                } else if (isEnglish && !document.queryCommandState('justifyLeft') && !document.queryCommandState('justifyCenter') && !document.queryCommandState('justifyRight')) {
+                    // Default English to left if nothing else is set
+                    document.execCommand('justifyLeft', false, null);
+                }
+            }
+            updateToolbarState();
+        }
+
+        // Keep toolbar updated
+        document.addEventListener('selectionchange', () => {
+            if (document.activeElement.id === 'currentNoteContent') {
+                updateToolbarState();
+            }
+        });
+
+        // Background Icon Logic
+        let currentEditingNoteBgIcon = null;
+
+        function openIconPicker() {
+            document.getElementById('iconPickerOverlay').classList.add('active');
+            // Mark active
+            document.querySelectorAll('.selectable-icon').forEach(el => {
+                el.classList.toggle('active', el.dataset.icon === currentEditingNoteBgIcon);
+            });
+        }
+
+        function closeIconPicker(event) {
+            if (!event || event.target === document.getElementById('iconPickerOverlay') || event.target.closest('button')) {
+                document.getElementById('iconPickerOverlay').classList.remove('active');
+            }
+        }
+
+        function selectNoteIcon(iconClass) {
+            currentEditingNoteBgIcon = iconClass;
+            const bgEl = document.getElementById('noteEditorBgIcon');
+            if (iconClass) {
+                bgEl.innerHTML = `<i class="fa-solid ${iconClass}"></i>`;
+            } else {
+                bgEl.innerHTML = '';
+            }
+            autoSaveNote();
+            setTimeout(closeIconPicker, 200);
+        }
+
         function autoSaveNote() {
             const titleInput = document.getElementById('currentNoteTitle');
             const contentInput = document.getElementById('currentNoteContent');
             const title = titleInput.value.trim();
-            const content = contentInput.value.trim();
+            const content = contentInput.innerHTML.trim();
 
             if (!content && !title) {
                 return;
@@ -1197,10 +1695,17 @@
                     content: content,
                     archived: false,
                     archivedAt: null,
+                    bgIcon: currentEditingNoteBgIcon,
                     updatedAt: new Date().toLocaleDateString('ar-EG')
                 };
                 notes.unshift(newNote);
                 currentEditingNoteId = newNote.id; // From now on, it patches this new note
+            }
+
+            // If we are editing, update the icon too if it changed
+            if (currentEditingNoteId) {
+                const note = notes.find(n => n.id === currentEditingNoteId);
+                if (note) note.bgIcon = currentEditingNoteBgIcon;
             }
 
             // Save without triggering a full UI update instantly to avoid losing focus
@@ -1386,9 +1891,11 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-1 shrink-0">
+                            ${!isLocalArchive ? `
                             <button onclick="editTask(${task.id}, event)" class="w-8 h-8 rounded-full flex items-center justify-center text-blue-400 opacity-60 hover:opacity-100 hover:bg-blue-500/10 transition-all" title="تعديل">
                                 <i class="fa-solid fa-pen text-sm"></i>
                             </button>
+                            ` : ''}
                             <button onclick="deleteTask(${task.id}, event)" class="w-8 h-8 rounded-full flex items-center justify-center text-red-400 opacity-60 hover:opacity-100 hover:bg-red-500/10 transition-all" title="حذف نهائي">
                                 <i class="fa-solid fa-trash-can text-sm"></i>
                             </button>
@@ -1459,18 +1966,29 @@
                         `;
                 }
 
-                const shortContent = note.content.length > 40 ? note.content.substring(0, 40) + '...' : note.content;
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = note.content;
+                const plainText = tempDiv.textContent || tempDiv.innerText || '';
+                const shortContent = plainText.length > 40 ? plainText.substring(0, 40) + '...' : plainText;
 
+                const bgIconClass = note.bgIcon || '';
+                let bgIconHTML = '';
+                if (bgIconClass) {
+                    bgIconHTML = `<i class="fa-solid ${bgIconClass} absolute left-6 top-1/2 -translate-y-1/2 text-emerald-500/10 text-6xl pointer-events-none transition-all duration-500"></i>`;
+                }
+
+                noteEl.classList.add('relative', 'overflow-hidden');
                 noteEl.innerHTML = `
+                        ${bgIconHTML}
                         ${checkboxHTML}
-                        <div class="flex-1 transition-all duration-300 overflow-hidden">
+                        <div class="flex-1 transition-all duration-300 overflow-hidden relative z-10">
                             <h3 class="${isArchived ? 'text-gray-500 line-through' : 'text-white'} font-medium text-base mb-1 transition-colors duration-300 truncate">${note.title}</h3>
                             <p class="text-gray-400 text-xs truncate">
                                 ${shortContent || 'بدون محتوى'}
                             </p>
                             <span class="block text-[10px] text-gray-600 mt-1">${note.updatedAt}</span>
                         </div>
-                        <button onclick="deleteNoteDirectly(${note.id}, event)" class="w-8 h-8 rounded-full flex items-center justify-center text-red-400 opacity-60 hover:opacity-100 hover:bg-red-500/10 transition-all" title="حذف نهائي">
+                        <button onclick="deleteNoteDirectly(${note.id}, event)" class="w-8 h-8 rounded-full flex items-center justify-center text-red-400 opacity-60 hover:opacity-100 hover:bg-red-500/10 transition-all relative z-10" title="حذف نهائي">
                             <i class="fa-solid fa-trash-can text-sm"></i>
                         </button>
                     `;
@@ -1777,11 +2295,21 @@
                 // Edit existing
                 const note = notes.find(n => n.id === noteId);
                 titleInput.value = note.title !== 'بدون عنوان' ? note.title : '';
-                contentInput.value = note.content;
+                contentInput.innerHTML = note.content;
+                currentEditingNoteBgIcon = note.bgIcon || null;
             } else {
                 // New note
                 titleInput.value = '';
-                contentInput.value = '';
+                contentInput.innerHTML = '';
+                currentEditingNoteBgIcon = null;
+            }
+
+            // Update preview icon
+            const bgEl = document.getElementById('noteEditorBgIcon');
+            if (currentEditingNoteBgIcon) {
+                bgEl.innerHTML = `<i class="fa-solid ${currentEditingNoteBgIcon}"></i>`;
+            } else {
+                bgEl.innerHTML = '';
             }
 
             openSubpage('note-editor');

@@ -802,49 +802,83 @@
         // Swipe to Return (Close Subpage)
         // -------------------------
         let touchStartX = 0;
+        let touchStartY = 0;
         let touchCurrentX = 0;
         let isDraggingSubpage = false;
+        let isSwipeValidated = false;
         let activeSubpageEl = null;
 
         document.addEventListener('touchstart', e => {
             touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
             activeSubpageEl = document.querySelector('.subpage.active');
+            isDraggingSubpage = false;
+            isSwipeValidated = false;
+            
             if (activeSubpageEl) {
-                isDraggingSubpage = true;
                 activeSubpageEl.style.transition = 'none';
             }
         }, { passive: true });
 
         document.addEventListener('touchmove', e => {
-            if (!isDraggingSubpage || !activeSubpageEl) return;
-            touchCurrentX = e.changedTouches[0].screenX;
-            const deltaX = touchStartX - touchCurrentX;
+            if (!activeSubpageEl) return;
             
-            // Swiping towards the left (RTL back gesture)
-            if (deltaX > 0) {
-                activeSubpageEl.style.transform = `translateX(${-deltaX}px)`;
-            } else {
-                activeSubpageEl.style.transform = `translateX(0px)`;
+            touchCurrentX = e.changedTouches[0].screenX;
+            const touchCurrentY = e.changedTouches[0].screenY;
+            
+            const deltaX = touchStartX - touchCurrentX;
+            const deltaY = Math.abs(touchStartY - touchCurrentY);
+
+            // Validate intent: if horizontal movement is significantly greater than vertical
+            if (!isSwipeValidated) {
+                if (Math.abs(deltaX) > 10 && Math.abs(deltaX) > deltaY) {
+                    isSwipeValidated = true;
+                    isDraggingSubpage = true;
+                } else if (deltaY > 10) {
+                    // It's a vertical scroll, don't interfere
+                    activeSubpageEl = null; 
+                    return;
+                }
             }
-        }, { passive: true });
+
+            if (isDraggingSubpage) {
+                // Prevent vertical scrolling while swiping horizontally
+                if (e.cancelable) e.preventDefault();
+                
+                // Swiping towards the left (RTL back gesture)
+                if (deltaX > 0) {
+                    activeSubpageEl.style.transform = `translateX(${-deltaX}px)`;
+                } else {
+                    activeSubpageEl.style.transform = `translateX(0px)`;
+                }
+            }
+        }, { passive: false });
 
         document.addEventListener('touchend', e => {
-            if (!isDraggingSubpage || !activeSubpageEl) return;
+            if (!activeSubpageEl) return;
+            
+            const wasDragging = isDraggingSubpage;
             isDraggingSubpage = false;
+            isSwipeValidated = false;
 
-            const touchEndX = e.changedTouches[0].screenX;
-            const deltaX = touchStartX - touchEndX;
-            const SWIPE_THRESHOLD = 100;
+            if (wasDragging) {
+                const touchEndX = e.changedTouches[0].screenX;
+                const deltaX = touchStartX - touchEndX;
+                const SWIPE_THRESHOLD = 100;
 
-            activeSubpageEl.style.transition = ''; // restore transition
+                activeSubpageEl.style.transition = ''; // restore transition
 
-            if (deltaX > SWIPE_THRESHOLD) {
-                const subId = activeSubpageEl.id.replace('subpage-', '');
-                activeSubpageEl.style.transform = '';
-                closeSubpage(subId);
+                if (deltaX > SWIPE_THRESHOLD) {
+                    const subId = activeSubpageEl.id.replace('subpage-', '');
+                    activeSubpageEl.style.transform = '';
+                    closeSubpage(subId);
+                } else {
+                    activeSubpageEl.style.transform = ''; // snap back using CSS transition
+                }
             } else {
-                activeSubpageEl.style.transform = ''; // snap back using CSS transition
+                activeSubpageEl.style.transition = '';
             }
+            
             activeSubpageEl = null;
         }, { passive: true });
 

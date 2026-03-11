@@ -345,11 +345,13 @@
             pointer-events: none;
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
+
         .icon-picker-overlay.active {
             opacity: 1;
             visibility: visible;
             pointer-events: auto;
         }
+
         .icon-card {
             background: #111827;
             border: 1px solid rgba(16, 185, 129, 0.3);
@@ -362,16 +364,19 @@
             transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
         }
+
         .icon-picker-overlay.active .icon-card {
             transform: translateY(0) scale(1);
             opacity: 1;
         }
+
         .icon-select-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 1.5rem;
             margin-top: 2rem;
         }
+
         .selectable-icon {
             aspect-ratio: 1;
             display: flex;
@@ -387,16 +392,19 @@
             opacity: 0;
             transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
+
         .icon-picker-overlay.active .selectable-icon {
             transform: scale(1);
             opacity: 1;
         }
+
         .selectable-icon:hover {
             background: rgba(16, 185, 129, 0.15);
             border-color: rgba(16, 185, 129, 0.4);
             color: #10b981;
             transform: translateY(-8px) scale(1.05) !important;
         }
+
         .selectable-icon.active {
             background: #10b981;
             border-color: #10b981;
@@ -406,14 +414,32 @@
 
         .note-bg-preview {
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 20rem;
-            color: rgba(16, 185, 129, 0.04);
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             pointer-events: none;
-            z-index: -1;
-            transition: all 0.5s ease;
+            z-index: 0;
+            opacity: 0.15;
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .note-bg-preview i {
+            font-size: 15rem;
+            filter: blur(2px);
+            animation: bg-float 6s ease-in-out infinite;
+        }
+
+        @keyframes bg-float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-20px);
+            }
         }
     </style>
 </head>
@@ -563,14 +589,19 @@
 
                 <div class="glass-panel p-6 rounded-2xl flex flex-col gap-6 bg-gray-800/40">
 
-                    <button onclick="openSubpage('wallpaper-settings')"
+                        <i
+                            class="fa-solid fa-chevron-left text-gray-500 group-hover:text-emerald-400 transition-colors"></i>
+                    </button>
+
+                    <!-- Hidden Buttons Settings -->
+                    <button onclick="openSubpage('hidden-buttons')"
                         class="flex justify-between items-center border-b border-white/10 pb-5 text-right w-full group active:scale-[0.98] transition-all">
                         <div class="flex gap-3 items-center">
                             <div
-                                class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex justify-center items-center">
-                                <i class="fa-solid fa-image"></i>
+                                class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 flex justify-center items-center">
+                                <i class="fa-solid fa-eye-slash"></i>
                             </div>
-                            <span class="text-white font-medium">الخلفية والمظهر</span>
+                            <span class="text-white font-medium">الأزرار المخفية</span>
                         </div>
                         <i
                             class="fa-solid fa-chevron-left text-gray-500 group-hover:text-emerald-400 transition-colors"></i>
@@ -610,22 +641,7 @@
                         </div>
                     </div>
 
-                    <!-- Show Global Archive Button Toggle -->
-                    <div class="flex justify-between items-center border-b border-white/10 pb-5">
-                        <div class="flex gap-3 items-center">
-                            <div
-                                class="w-8 h-8 rounded-lg bg-gray-500/10 text-gray-400 flex justify-center items-center">
-                                <i class="fa-solid fa-box-open"></i>
-                            </div>
-                            <span class="text-white font-medium text-sm">إظهار زر الأرشيف الشامل في القوائم</span>
-                        </div>
-                        <div id="global-archive-toggle-btn" onclick="toggleSetting('showGlobalArchiveBtn')"
-                            class="w-12 h-6 bg-emerald-500 rounded-full relative cursor-pointer shadow-[0_0_10px_rgba(16,185,129,0.3)] transition-colors duration-300">
-                            <div id="global-archive-toggle-thumb"
-                                class="w-5 h-5 bg-white rounded-full absolute top-0.5 right-[26px] toggle-thumb shadow-sm">
-                            </div>
-                        </div>
-                    </div>
+
 
                     <!-- Global Archive Page Link -->
                     <button onclick="openGlobalArchive('all')"
@@ -872,6 +888,69 @@
         <div id="global-archive-notes-list" class="flex-1 flex flex-col gap-3 hidden"></div>
     </div>
 
+    <!-- SUBPAGE: Hidden Buttons -->
+    <div id="subpage-hidden-buttons"
+        class="subpage px-6 pb-32 sm:border-x sm:border-white/10 overflow-y-auto overscroll-none">
+        <div
+            class="sticky top-0 z-20 bg-gray-900/20 backdrop-blur-[4px] -mx-6 px-6 pt-10 pb-4 mb-4 flex items-center gap-4">
+            <button onclick="closeSubpage('hidden-buttons')"
+                class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex justify-center items-center text-gray-400 hover:text-white active:scale-95 transition-all">
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+            <h2 class="text-xl font-bold text-white tracking-wide">الأزرار المخفية</h2>
+        </div>
+
+        <div class="glass-panel p-6 rounded-2xl flex flex-col gap-6 bg-gray-800/40">
+            <!-- Show Global Archive Toggle -->
+            <div class="flex justify-between items-center border-b border-white/10 pb-5">
+                <div class="flex gap-3 items-center">
+                    <div class="w-8 h-8 rounded-lg bg-gray-500/10 text-gray-400 flex justify-center items-center">
+                        <i class="fa-solid fa-box-open"></i>
+                    </div>
+                    <span class="text-white font-medium text-sm">إظهار زر الأرشيف الشامل</span>
+                </div>
+                <div id="global-archive-toggle-btn" onclick="toggleSetting('showGlobalArchiveBtn')"
+                    class="w-12 h-6 bg-emerald-500 rounded-full relative cursor-pointer shadow-[0_0_10px_rgba(16,185,129,0.3)] transition-colors duration-300">
+                    <div id="global-archive-toggle-thumb"
+                        class="w-5 h-5 bg-white rounded-full absolute top-0.5 right-[26px] toggle-thumb shadow-sm">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Show Note Icon Toggle -->
+            <div class="flex justify-between items-center border-b border-white/10 pb-5">
+                <div class="flex gap-3 items-center">
+                    <div class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex justify-center items-center">
+                        <i class="fa-solid fa-icons"></i>
+                    </div>
+                    <span class="text-white font-medium text-sm">زر أيقونة خلفية الملاحظات</span>
+                </div>
+                <div id="note-icon-toggle-btn" onclick="toggleSetting('showNoteBgIconBtn')"
+                    class="w-12 h-6 bg-emerald-500 rounded-full relative cursor-pointer shadow-[0_0_10px_rgba(16,185,129,0.3)] transition-colors duration-300">
+                    <div id="note-icon-toggle-thumb"
+                        class="w-5 h-5 bg-white rounded-full absolute top-0.5 right-[26px] toggle-thumb shadow-sm">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Show Task Icon Toggle -->
+            <div class="flex justify-between items-center border-b border-white/10 pb-5">
+                <div class="flex gap-3 items-center">
+                    <div class="w-8 h-8 rounded-lg bg-red-500/10 text-red-500 flex justify-center items-center">
+                        <i class="fa-solid fa-fire"></i>
+                    </div>
+                    <span class="text-white font-medium text-sm">أيقونة خلفية المهام</span>
+                </div>
+                <div id="task-icon-toggle-btn" onclick="toggleSetting('showTaskBgIconBtn')"
+                    class="w-12 h-6 bg-emerald-500 rounded-full relative cursor-pointer shadow-[0_0_10px_rgba(16,185,129,0.3)] transition-colors duration-300">
+                    <div id="task-icon-toggle-thumb"
+                        class="w-5 h-5 bg-white rounded-full absolute top-0.5 right-[26px] toggle-thumb shadow-sm">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <!-- ================= MODALS ================= -->
 
@@ -1013,15 +1092,13 @@
                     <i class="fa-solid fa-icons text-xl"></i>
                 </button>
 
-                <input type="text" id="currentNoteTitle" placeholder="عنوان الملاحظة الراقية..."
-                    oninput="autoSaveNote()"
+                <input type="text" id="currentNoteTitle" placeholder="عنوان الملاحظة ..." oninput="autoSaveNote()"
                     class="bg-transparent border-none text-2xl font-black text-white placeholder-white/20 focus:outline-none w-full text-right tracking-tight">
             </div>
         </div>
 
         <!-- Integrated Editor -->
         <div class="editor-container flex-1 flex flex-col overflow-hidden relative">
-            <div id="noteEditorBgIcon" class="note-bg-preview"></div>
             <div id="currentNoteContent" contenteditable="true" data-placeholder="اكتب أفكارك بجمالية هنا..."
                 oninput="handleEditorInput()" onkeyup="updateToolbarState()" onclick="updateToolbarState()"
                 class="flex-1 w-full bg-transparent border-none p-4 pb-32 text-white/90 placeholder-gray-500 focus:outline-none text-lg leading-relaxed text-right min-h-[300px] overflow-y-auto break-words [overflow-wrap:anywhere] [word-break:break-word]">
@@ -1110,19 +1187,27 @@
     <div id="iconPickerOverlay" class="icon-picker-overlay" onclick="closeIconPicker(event)">
         <div class="icon-card" onclick="event.stopPropagation()">
             <div class="flex justify-between items-center mb-6">
-                <button onclick="closeIconPicker()" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark"></i></button>
+                <button onclick="closeIconPicker()"
+                    class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:text-white transition-colors"><i
+                        class="fa-solid fa-xmark"></i></button>
                 <h3 class="text-white text-xl font-black tracking-tight">خلفية الملاحظة</h3>
             </div>
-            
+
             <p class="text-gray-400 text-sm text-center px-4">اختر أيقونة لتمثيل طابع هذه الملاحظة في الخلفية</p>
-            
+
             <div class="icon-select-grid" id="note-icon-grid">
-                <div class="selectable-icon" data-icon="fa-fire" onclick="selectNoteIcon('fa-fire')"><i class="fa-solid fa-fire"></i></div>
-                <div class="selectable-icon" data-icon="fa-heart" onclick="selectNoteIcon('fa-heart')"><i class="fa-solid fa-heart"></i></div>
-                <div class="selectable-icon" data-icon="fa-star" onclick="selectNoteIcon('fa-star')"><i class="fa-solid fa-star"></i></div>
-                <div class="selectable-icon" data-icon="fa-cloud" onclick="selectNoteIcon('fa-cloud')"><i class="fa-solid fa-cloud"></i></div>
-                <div class="selectable-icon" data-icon="fa-ghost" onclick="selectNoteIcon('fa-ghost')"><i class="fa-solid fa-ghost"></i></div>
-                <div class="selectable-icon" data-icon="fa-rocket" onclick="selectNoteIcon('fa-rocket')"><i class="fa-solid fa-rocket"></i></div>
+                <div class="selectable-icon" data-icon="fa-fire" onclick="selectNoteIcon('fa-fire')"><i
+                        class="fa-solid fa-fire"></i></div>
+                <div class="selectable-icon" data-icon="fa-heart" onclick="selectNoteIcon('fa-heart')"><i
+                        class="fa-solid fa-heart"></i></div>
+                <div class="selectable-icon" data-icon="fa-star" onclick="selectNoteIcon('fa-star')"><i
+                        class="fa-solid fa-star"></i></div>
+                <div class="selectable-icon" data-icon="fa-cloud" onclick="selectNoteIcon('fa-cloud')"><i
+                        class="fa-solid fa-cloud"></i></div>
+                <div class="selectable-icon" data-icon="fa-ghost" onclick="selectNoteIcon('fa-ghost')"><i
+                        class="fa-solid fa-ghost"></i></div>
+                <div class="selectable-icon" data-icon="fa-rocket" onclick="selectNoteIcon('fa-rocket')"><i
+                        class="fa-solid fa-rocket"></i></div>
                 <div class="selectable-icon col-span-3 aspect-auto py-3 mt-2" onclick="selectNoteIcon(null)">
                     <span class="text-sm font-bold">بدون أيقونة</span>
                 </div>
@@ -1142,9 +1227,13 @@
             wallpaper: 'default',
             customWallpaperData: null,
             blurIntensity: 80,
-            showGlobalArchiveBtn: true
+            showGlobalArchiveBtn: true,
+            showNoteBgIconBtn: true,
+            showTaskBgIconBtn: true
         };
         if (settings.showGlobalArchiveBtn === undefined) settings.showGlobalArchiveBtn = true;
+        if (settings.showNoteBgIconBtn === undefined) settings.showNoteBgIconBtn = true;
+        if (settings.showTaskBgIconBtn === undefined) settings.showTaskBgIconBtn = true;
 
         let currentEditingNoteId = null;
         let currentEditingTaskId = null;
@@ -1647,8 +1736,9 @@
 
         function openIconPicker() {
             document.getElementById('iconPickerOverlay').classList.add('active');
-            // Mark active
-            document.querySelectorAll('.selectable-icon').forEach(el => {
+            // Mark active and apply staggered delay
+            document.querySelectorAll('.selectable-icon').forEach((el, index) => {
+                el.style.transitionDelay = `${index * 50}ms`;
                 el.classList.toggle('active', el.dataset.icon === currentEditingNoteBgIcon);
             });
         }
@@ -1662,10 +1752,12 @@
         function selectNoteIcon(iconClass) {
             currentEditingNoteBgIcon = iconClass;
             const bgEl = document.getElementById('noteEditorBgIcon');
-            if (iconClass) {
-                bgEl.innerHTML = `<i class="fa-solid ${iconClass}"></i>`;
-            } else {
-                bgEl.innerHTML = '';
+            if (bgEl) {
+                if (iconClass) {
+                    bgEl.innerHTML = `<i class="fa-solid ${iconClass}"></i>`;
+                } else {
+                    bgEl.innerHTML = '';
+                }
             }
             autoSaveNote();
             setTimeout(closeIconPicker, 200);
@@ -2306,10 +2398,12 @@
 
             // Update preview icon
             const bgEl = document.getElementById('noteEditorBgIcon');
-            if (currentEditingNoteBgIcon) {
-                bgEl.innerHTML = `<i class="fa-solid ${currentEditingNoteBgIcon}"></i>`;
-            } else {
-                bgEl.innerHTML = '';
+            if (bgEl) {
+                if (currentEditingNoteBgIcon) {
+                    bgEl.innerHTML = `<i class="fa-solid ${currentEditingNoteBgIcon}"></i>`;
+                } else {
+                    bgEl.innerHTML = '';
+                }
             }
 
             openSubpage('note-editor');

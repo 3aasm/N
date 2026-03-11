@@ -1970,7 +1970,7 @@
                 taskEl.classList.add('relative', 'overflow-hidden');
 
                 taskEl.innerHTML = `
-                        ${bgIconHTML}
+                        ${settings.showTaskBgIconBtn ? bgIconHTML : ''}
                         ${checkboxHTML}
                         <div class="flex-1 transition-all duration-300 relative z-10">
                             <h3 class="${isCompleted ? 'text-gray-500 line-through' : 'text-white'} font-medium text-base mb-1 transition-colors duration-300">${task.title}</h3>
@@ -2431,15 +2431,15 @@
             if (settings.glow) {
                 if (orb1) orb1.style.opacity = '1';
                 if (orb2) orb2.style.opacity = '1';
-                glowBtn.classList.replace('bg-white/20', 'bg-emerald-500');
-                glowBtn.classList.add('shadow-[0_0_10px_rgba(16,185,129,0.3)]');
-                glowThumb.style.right = '26px';
+                if (glowBtn) glowBtn.classList.replace('bg-white/20', 'bg-emerald-500');
+                if (glowBtn) glowBtn.classList.add('shadow-[0_0_10px_rgba(16,185,129,0.3)]');
+                if (glowThumb) glowThumb.style.right = '26px';
             } else {
                 if (orb1) orb1.style.opacity = '0';
                 if (orb2) orb2.style.opacity = '0';
-                glowBtn.classList.replace('bg-emerald-500', 'bg-white/20');
-                glowBtn.classList.remove('shadow-[0_0_10px_rgba(16,185,129,0.3)]');
-                glowThumb.style.right = '2px';
+                if (glowBtn) glowBtn.classList.replace('bg-emerald-500', 'bg-white/20');
+                if (glowBtn) glowBtn.classList.remove('shadow-[0_0_10px_rgba(16,185,129,0.3)]');
+                if (glowThumb) glowThumb.style.right = '2px';
             }
 
             // Notif visuals
@@ -2448,15 +2448,15 @@
             const notifIcon = document.getElementById('notif-icon');
 
             if (settings.notif) {
-                notifBtn.classList.replace('bg-white/20', 'bg-emerald-500');
-                notifBtn.classList.add('shadow-[0_0_10px_rgba(16,185,129,0.3)]');
-                notifThumb.style.right = '26px';
-                notifIcon.classList.replace('text-blue-400', 'text-emerald-400');
+                if (notifBtn) notifBtn.classList.replace('bg-white/20', 'bg-emerald-500');
+                if (notifBtn) notifBtn.classList.add('shadow-[0_0_10px_rgba(16,185,129,0.3)]');
+                if (notifThumb) notifThumb.style.right = '26px';
+                if (notifIcon) notifIcon.classList.replace('text-blue-400', 'text-emerald-400');
             } else {
-                notifBtn.classList.replace('bg-emerald-500', 'bg-white/20');
-                notifBtn.classList.remove('shadow-[0_0_10px_rgba(16,185,129,0.3)]');
-                notifThumb.style.right = '2px';
-                notifIcon.classList.replace('text-emerald-400', 'text-blue-400');
+                if (notifBtn) notifBtn.classList.replace('bg-emerald-500', 'bg-white/20');
+                if (notifBtn) notifBtn.classList.remove('shadow-[0_0_10px_rgba(16,185,129,0.3)]');
+                if (notifThumb) notifThumb.style.right = '2px';
+                if (notifIcon) notifIcon.classList.replace('text-emerald-400', 'text-blue-400');
             }
 
             // Global Archive Button Visuals
@@ -2464,14 +2464,55 @@
             const globalThumb = document.getElementById('global-archive-toggle-thumb');
 
             if (settings.showGlobalArchiveBtn) {
-                globalBtn.classList.replace('bg-white/20', 'bg-emerald-500');
-                globalBtn.classList.add('shadow-[0_0_10px_rgba(16,185,129,0.3)]');
-                globalThumb.style.right = '26px';
+                if (globalBtn) globalBtn.classList.replace('bg-white/20', 'bg-emerald-500');
+                if (globalBtn) globalBtn.classList.add('shadow-[0_0_10px_rgba(16,185,129,0.3)]');
+                if (globalThumb) globalThumb.style.right = '26px';
             } else {
-                globalBtn.classList.replace('bg-emerald-500', 'bg-white/20');
-                globalBtn.classList.remove('shadow-[0_0_10px_rgba(16,185,129,0.3)]');
-                globalThumb.style.right = '2px';
+                if (globalBtn) globalBtn.classList.replace('bg-emerald-500', 'bg-white/20');
+                if (globalBtn) globalBtn.classList.remove('shadow-[0_0_10px_rgba(16,185,129,0.3)]');
+                if (globalThumb) globalThumb.style.right = '2px';
             }
+
+            // Note Icon Button Visuals
+            const noteIconBtn = document.getElementById('note-icon-toggle-btn');
+            const noteIconThumb = document.getElementById('note-icon-toggle-thumb');
+            if (settings.showNoteBgIconBtn) {
+                if (noteIconBtn) noteIconBtn.classList.replace('bg-white/20', 'bg-emerald-500');
+                if (noteIconBtn) noteIconBtn.classList.add('shadow-[0_0_10px_rgba(16,185,129,0.3)]');
+                if (noteIconThumb) noteIconThumb.style.right = '26px';
+            } else {
+                if (noteIconBtn) noteIconBtn.classList.replace('bg-emerald-500', 'bg-white/20');
+                if (noteIconBtn) noteIconBtn.classList.remove('shadow-[0_0_10px_rgba(16,185,129,0.3)]');
+                if (noteIconThumb) noteIconThumb.style.right = '2px';
+            }
+
+            // Task Icon Toggle Visuals
+            const taskIconBtn = document.getElementById('task-icon-toggle-btn');
+            const taskIconThumb = document.getElementById('task-icon-toggle-thumb');
+            if (settings.showTaskBgIconBtn) {
+                if (taskIconBtn) taskIconBtn.classList.replace('bg-white/20', 'bg-emerald-500');
+                if (taskIconBtn) taskIconBtn.classList.add('shadow-[0_0_10px_rgba(16,185,129,0.3)]');
+                if (taskIconThumb) taskIconThumb.style.right = '26px';
+            } else {
+                if (taskIconBtn) taskIconBtn.classList.replace('bg-emerald-500', 'bg-white/20');
+                if (taskIconBtn) taskIconBtn.classList.remove('shadow-[0_0_10px_rgba(16,185,129,0.3)]');
+                if (taskIconThumb) taskIconThumb.style.right = '2px';
+            }
+
+            // UI Visibility based on settings
+            const globalArchiveLinks = document.querySelectorAll('button[onclick*="openGlobalArchive"]');
+            globalArchiveLinks.forEach(btn => btn.classList.toggle('hidden', !settings.showGlobalArchiveBtn));
+
+            const noteIconTrigger = document.querySelector('button[onclick="openIconPicker()"]');
+            if (noteIconTrigger) noteIconTrigger.classList.toggle('hidden', !settings.showNoteBgIconBtn);
+
+            const taskBgSwitch = document.getElementById('newTaskShowBgIcon')?.closest('.mt-6');
+            if (taskBgSwitch) taskBgSwitch.classList.toggle('hidden', !settings.showTaskBgIconBtn);
+
+            // Redraw tasks list to handle icon visibility
+            renderTasksList('dashboard-tasks-list', tasks.filter(t => !t.completed).slice(0, 4));
+            renderTasksList('all-tasks-list', tasks.filter(t => !t.completed));
+            renderTasksList('archived-tasks-list', tasks.filter(t => t.completed));
 
             // Blur Toggle Visuals
             const blurLevels = [20, 40, 60, 80];

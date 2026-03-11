@@ -480,26 +480,38 @@
             left: -150%;
             width: 80%;
             height: 200%;
-            background: linear-gradient(
-                to right,
-                transparent 0%,
-                rgba(255, 255, 255, 0.05) 30%,
-                rgba(255, 255, 255, 0.4) 50%,
-                rgba(255, 255, 255, 0.05) 70%,
-                transparent 100%
-            );
+            background: linear-gradient(to right,
+                    transparent 0%,
+                    rgba(255, 255, 255, 0.05) 30%,
+                    rgba(255, 255, 255, 0.4) 50%,
+                    rgba(255, 255, 255, 0.05) 70%,
+                    transparent 100%);
             transform: rotate(25deg);
             animation: glass-sweep 1.8s ease-in-out infinite;
         }
 
         @keyframes shimmer-entrance {
-            0% { opacity: 0; transform: scale(0.9); filter: blur(10px); }
-            100% { opacity: 1; transform: scale(1); filter: blur(0); }
+            0% {
+                opacity: 0;
+                transform: scale(0.9);
+                filter: blur(10px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1);
+                filter: blur(0);
+            }
         }
 
         @keyframes glass-sweep {
-            0% { left: -150%; }
-            100% { left: 150%; }
+            0% {
+                left: -150%;
+            }
+
+            100% {
+                left: 150%;
+            }
         }
 
         .splash-fade-out {
@@ -721,6 +733,20 @@
                         </div>
                     </div>
 
+                    <!-- App Info Button -->
+                    <button onclick="openSubpage('app-info')"
+                        class="flex justify-between items-center border-b border-white/10 pb-5 text-right w-full group active:scale-[0.98] transition-all">
+                        <div class="flex gap-3 items-center">
+                            <div
+                                class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex justify-center items-center">
+                                <i class="fa-solid fa-circle-info"></i>
+                            </div>
+                            <span class="text-white font-medium">معلومات التطبيق</span>
+                        </div>
+                        <i
+                            class="fa-solid fa-chevron-left text-gray-500 group-hover:text-emerald-400 transition-colors"></i>
+                    </button>
+
 
 
                     <!-- Global Archive Page Link -->
@@ -870,6 +896,44 @@
                             class="blur-intensity-btn flex-1 py-2 rounded-lg border border-white/10 text-white/50 text-xs sm:text-sm font-bold hover:bg-white/5 transition-all">
                             40%
                         </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SUBPAGE: App Information -->
+    <div id="subpage-app-info" class="subpage px-6 sm:border-x sm:border-white/10 overflow-y-auto overscroll-none">
+        <div
+            class="sticky top-0 z-20 bg-gray-900/20 backdrop-blur-[4px] -mx-6 px-6 pt-10 pb-4 mb-4 flex items-center gap-4">
+            <button onclick="closeSubpage('app-info')"
+                class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex justify-center items-center text-gray-400 hover:text-white active:scale-95 transition-all">
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+            <h2 class="text-xl font-bold text-white tracking-wide">حول التطبيق</h2>
+        </div>
+
+        <div class="flex flex-col items-center justify-center py-12 gap-8 text-center animate-in fade-in zoom-in duration-500">
+            <div class="relative group">
+                <div class="absolute -inset-1 bg-emerald-500/20 rounded-[3rem] blur-xl group-hover:bg-emerald-500/30 transition duration-500"></div>
+                <img src="apple-touch-icon.png" alt="Logo" class="relative w-40 h-40 rounded-[2.5rem] shadow-2xl border border-white/10 filter group-hover:scale-105 transition-transform duration-500">
+            </div>
+            
+            <div class="space-y-2">
+                <h3 class="text-3xl font-black text-white tracking-tight">مفكرتي الذكية</h3>
+                <p class="text-emerald-400 font-bold text-sm tracking-widest uppercase opacity-80 italic">Smart Notebook</p>
+            </div>
+
+            <div class="bg-white/5 border border-white/10 rounded-2xl px-6 py-3 backdrop-blur-md">
+                <span class="text-gray-400 text-xs font-bold uppercase tracking-widest block mb-1">النسخة الحالية</span>
+                <span class="text-white text-2xl font-mono font-bold">0.5</span>
+            </div>
+
+            <div class="max-w-xs text-center text-gray-400 text-sm leading-relaxed px-4">
+                تطبيق بسيط ومنظم لمساعدتك على تدوين ملاحضاتك وادارة مهامك اليومية بكفاءة عالية.
+            </div>
+        </div>
+    </div>
                         <button onclick="setBlurIntensity(60)" id="blur-btn-60"
                             class="blur-intensity-btn flex-1 py-2 rounded-lg border border-white/10 text-white/50 text-xs sm:text-sm font-bold hover:bg-white/5 transition-all">
                             60%
@@ -2959,7 +3023,7 @@
             // Faster timing for a cleaner, premium feel
             setTimeout(() => {
                 splash.classList.add('splash-fade-out');
-                
+
                 setTimeout(() => {
                     splash.remove();
                 }, 800);

@@ -656,7 +656,8 @@
 
         <div id="taskModalContent"
             class="glass-panel bg-gray-800 w-full sm:w-[400px] rounded-t-3xl sm:rounded-3xl p-7 relative z-10 transform translate-y-full sm:translate-y-0 sm:scale-95 transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] border-t border-emerald-500/30 flex flex-col">
-            <div id="task-modal-handle" class="w-12 h-1.5 flex-shrink-0 bg-white/20 rounded-full mx-auto mb-6 sm:hidden cursor-pointer"
+            <div id="task-modal-handle"
+                class="w-12 h-1.5 flex-shrink-0 bg-white/20 rounded-full mx-auto mb-6 sm:hidden cursor-pointer"
                 onclick="closeTaskModal()"></div>
 
             <h2 class="text-2xl font-bold text-white mb-6 tracking-wide drop-shadow-sm">إضافة <span
@@ -709,6 +710,27 @@
                             عادي <i class="fa-solid fa-fire mr-1"></i>
                         </button>
                     </div>
+                </div>
+
+                <!-- Show Background Icon Toggle -->
+                <div
+                    class="mt-6 flex items-center justify-between bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        </div>
+                        <div>
+                            <span class="text-white text-sm font-bold block">أيقونة الخلفية</span>
+                            <span class="text-gray-400 text-[10px]">إظهار أيقونة الأهمية في الخلفية</span>
+                        </div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="newTaskShowBgIcon" class="sr-only peer">
+                        <div
+                            class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500">
+                        </div>
+                    </label>
                 </div>
             </div>
 
@@ -831,13 +853,13 @@
         document.addEventListener('touchstart', e => {
             // Already dragging or no subpage active? Ignore.
             if (touchId !== null) return;
-            
+
             const touch = e.changedTouches[0];
             const x = touch.clientX;
             touchStartX = x;
             touchStartY = touch.clientY;
             touchId = touch.identifier;
-            
+
             activeSubpageEl = document.querySelector('.subpage.active');
             isDraggingSubpage = false;
             isSwipeValidated = false;
@@ -852,7 +874,7 @@
                     const mainEl = document.querySelector('main');
                     if (mainEl) mainEl.style.transition = 'none';
                 } else {
-                    activeSubpageEl = null; 
+                    activeSubpageEl = null;
                     touchId = null;
                 }
             } else {
@@ -912,7 +934,7 @@
 
         document.addEventListener('touchend', e => {
             if (!activeSubpageEl || touchId === null) return;
-            
+
             const touch = Array.from(e.changedTouches).find(t => t.identifier === touchId);
             if (!touch) return;
 
@@ -953,20 +975,20 @@
         }, { passive: true });
 
         document.addEventListener('touchcancel', () => {
-             if (activeSubpageEl) {
-                 activeSubpageEl.style.transition = '';
-                 activeSubpageEl.style.transform = '';
-                 const mainEl = document.querySelector('main');
-                 if (mainEl) {
-                     mainEl.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
-                     mainEl.style.transform = 'scale(0.95) translateX(20px)';
-                     mainEl.style.filter = 'brightness(0.7)';
-                 }
-             }
-             activeSubpageEl = null;
-             touchId = null;
-             isDraggingSubpage = false;
-             isSwipeValidated = false;
+            if (activeSubpageEl) {
+                activeSubpageEl.style.transition = '';
+                activeSubpageEl.style.transform = '';
+                const mainEl = document.querySelector('main');
+                if (mainEl) {
+                    mainEl.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+                    mainEl.style.transform = 'scale(0.95) translateX(20px)';
+                    mainEl.style.filter = 'brightness(0.7)';
+                }
+            }
+            activeSubpageEl = null;
+            touchId = null;
+            isDraggingSubpage = false;
+            isSwipeValidated = false;
         });
 
         // -------------------------
@@ -1047,6 +1069,7 @@
                     task.maxRepetitions = maxRep;
                     task.notifBefore = notifBefore;
                     task.priority = currentSelectedPriority;
+                    task.showBgIcon = document.getElementById('newTaskShowBgIcon').checked;
                 }
                 currentEditingTaskId = null;
             } else {
@@ -1060,7 +1083,8 @@
                     currentRepetition: 0,
                     completed: false,
                     archivedAt: null,
-                    priority: currentSelectedPriority
+                    priority: currentSelectedPriority,
+                    showBgIcon: document.getElementById('newTaskShowBgIcon').checked
                 };
                 tasks.unshift(newTask);
             }
@@ -1083,6 +1107,7 @@
                 document.getElementById('newTaskTime').value = task.time !== 'بدون وقت' ? task.time : '';
                 document.getElementById('newTaskRepetitions').value = task.maxRepetitions || 1;
                 document.getElementById('newTaskNotifBefore').value = task.notifBefore || 5;
+                document.getElementById('newTaskShowBgIcon').checked = task.showBgIcon || false;
                 setTaskPriority(task.priority || 'normal');
                 openTaskModal();
             }
@@ -1332,13 +1357,25 @@
 
                 const priority = task.priority || 'normal';
                 let priorityIcon = '';
-                if (priority === 'important') priorityIcon = '<i class="fa-solid fa-fire text-red-500 text-[10px]"></i>';
-                else if (priority === 'medium') priorityIcon = '<i class="fa-solid fa-fire text-blue-400 text-[10px]"></i>';
-                else if (priority === 'normal') priorityIcon = '<i class="fa-solid fa-fire text-gray-400 text-[10px]"></i>';
+                let bgIconHTML = '';
+
+                if (priority === 'important') {
+                    priorityIcon = '<i class="fa-solid fa-fire text-red-500 text-[10px]"></i>';
+                    if (task.showBgIcon) bgIconHTML = '<i class="fa-solid fa-fire absolute left-10 top-1/2 -translate-y-1/2 text-red-500/10 text-6xl pointer-events-none transition-all duration-500"></i>';
+                } else if (priority === 'medium') {
+                    priorityIcon = '<i class="fa-solid fa-fire text-blue-400 text-[10px]"></i>';
+                    if (task.showBgIcon) bgIconHTML = '<i class="fa-solid fa-fire absolute left-10 top-1/2 -translate-y-1/2 text-blue-400/10 text-6xl pointer-events-none transition-all duration-500"></i>';
+                } else if (priority === 'normal') {
+                    priorityIcon = '<i class="fa-solid fa-fire text-gray-400 text-[10px]"></i>';
+                    if (task.showBgIcon) bgIconHTML = '<i class="fa-solid fa-fire absolute left-10 top-1/2 -translate-y-1/2 text-gray-400/10 text-6xl pointer-events-none transition-all duration-500"></i>';
+                }
+
+                taskEl.classList.add('relative', 'overflow-hidden');
 
                 taskEl.innerHTML = `
+                        ${bgIconHTML}
                         ${checkboxHTML}
-                        <div class="flex-1 transition-all duration-300">
+                        <div class="flex-1 transition-all duration-300 relative z-10">
                             <h3 class="${isCompleted ? 'text-gray-500 line-through' : 'text-white'} font-medium text-base mb-1 transition-colors duration-300">${task.title}</h3>
                             <div class="flex items-center gap-2">
                                 ${priorityIcon}
@@ -1650,6 +1687,7 @@
             });
             if (!currentEditingTaskId) {
                 setTaskPriority('normal');
+                document.getElementById('newTaskShowBgIcon').checked = false;
             }
             setTimeout(() => document.getElementById('newTaskTitle').focus(), 300);
         }
@@ -1657,17 +1695,17 @@
         function closeTaskModal() {
             const modal = document.getElementById('addTaskModal');
             const cont = document.getElementById('taskModalContent');
-            
+
             modal.style.transition = 'opacity 0.3s ease-out';
             modal.classList.add('opacity-0');
-            
+
             cont.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
             cont.style.transform = 'translateY(100%)';
 
             setTimeout(() => {
                 modal.classList.remove('flex');
                 modal.classList.add('hidden');
-                
+
                 // Reset styles for next open
                 cont.style.transform = '';
                 cont.style.transition = '';
@@ -2031,13 +2069,13 @@
                 // Wait for a split second for psychological feedback
                 setTimeout(() => {
                     closeConfirmModal();
-                    
+
                     // Wait for modal to finish closing animation (300ms)
                     setTimeout(() => {
                         // Apply fade out effect to body
                         document.body.style.transition = 'opacity 0.5s ease-out';
                         document.body.style.opacity = '0';
-                        
+
                         setTimeout(() => {
                             localStorage.clear();
                             window.location.reload();

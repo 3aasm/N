@@ -809,23 +809,32 @@
         let activeSubpageEl = null;
 
         document.addEventListener('touchstart', e => {
-            touchStartX = e.changedTouches[0].screenX;
-            touchStartY = e.changedTouches[0].screenY;
+            const x = e.changedTouches[0].clientX;
+            touchStartX = x;
+            touchStartY = e.changedTouches[0].clientY;
             activeSubpageEl = document.querySelector('.subpage.active');
             isDraggingSubpage = false;
             isSwipeValidated = false;
-            
+
+            // Only allow swipe if starting from the right edge (RTL)
+            const EDGE_THRESHOLD = 40;
+            const isAtRightEdge = x > (window.innerWidth - EDGE_THRESHOLD);
+
             if (activeSubpageEl) {
-                activeSubpageEl.style.transition = 'none';
+                if (isAtRightEdge) {
+                    activeSubpageEl.style.transition = 'none';
+                } else {
+                    activeSubpageEl = null; // Do not allow swipe if not at edge
+                }
             }
         }, { passive: true });
 
         document.addEventListener('touchmove', e => {
             if (!activeSubpageEl) return;
-            
-            touchCurrentX = e.changedTouches[0].screenX;
-            const touchCurrentY = e.changedTouches[0].screenY;
-            
+
+            touchCurrentX = e.changedTouches[0].clientX;
+            const touchCurrentY = e.changedTouches[0].clientY;
+
             const deltaX = touchStartX - touchCurrentX;
             const deltaY = Math.abs(touchStartY - touchCurrentY);
 
@@ -836,7 +845,7 @@
                     isDraggingSubpage = true;
                 } else if (deltaY > 10) {
                     // It's a vertical scroll, don't interfere
-                    activeSubpageEl = null; 
+                    activeSubpageEl = null;
                     return;
                 }
             }
@@ -844,7 +853,7 @@
             if (isDraggingSubpage) {
                 // Prevent vertical scrolling while swiping horizontally
                 if (e.cancelable) e.preventDefault();
-                
+
                 // Swiping towards the left (RTL back gesture)
                 if (deltaX > 0) {
                     activeSubpageEl.style.transform = `translateX(${-deltaX}px)`;
@@ -856,13 +865,13 @@
 
         document.addEventListener('touchend', e => {
             if (!activeSubpageEl) return;
-            
+
             const wasDragging = isDraggingSubpage;
             isDraggingSubpage = false;
             isSwipeValidated = false;
 
             if (wasDragging) {
-                const touchEndX = e.changedTouches[0].screenX;
+                const touchEndX = e.changedTouches[0].clientX;
                 const deltaX = touchStartX - touchEndX;
                 const SWIPE_THRESHOLD = 100;
 
@@ -878,7 +887,7 @@
             } else {
                 activeSubpageEl.style.transition = '';
             }
-            
+
             activeSubpageEl = null;
         }, { passive: true });
 
@@ -1193,12 +1202,12 @@
             if (isLocalArchive) {
                 const todayStr = formatArabicDate(Date.now());
                 container.innerHTML = `
-                    <div class="flex items-center justify-center gap-4 my-4 opacity-70">
-                        <div class="h-[1px] flex-1 bg-gradient-to-r from-transparent to-white/20"></div>
-                        <span class="text-xs font-bold text-gray-400 tracking-wider">${todayStr}</span>
-                        <div class="h-[1px] flex-1 bg-gradient-to-l from-transparent to-white/20"></div>
-                    </div>
-                `;
+                        <div class="flex items-center justify-center gap-4 my-4 opacity-70">
+                            <div class="h-[1px] flex-1 bg-gradient-to-r from-transparent to-white/20"></div>
+                            <span class="text-xs font-bold text-gray-400 tracking-wider">${todayStr}</span>
+                            <div class="h-[1px] flex-1 bg-gradient-to-l from-transparent to-white/20"></div>
+                        </div>
+                    `;
             }
 
             listToRender.forEach(task => {
@@ -1219,40 +1228,40 @@
                 if (isCompleted && isLocalArchive) {
                     // Inside archive: Show a distinctive green check style
                     checkboxHTML = `
-                        <div class="flex flex-col items-center justify-center shrink-0">
-                            <button class="checkbox-glass active border-emerald-500 bg-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.3)] w-7 h-7 rounded-lg flex flex-col items-center justify-center transition-all duration-300 border border-white/20">
-                                <i class="fa-solid fa-check text-[10px] text-emerald-400"></i>
-                            </button>
-                        </div>
-                    `;
+                            <div class="flex flex-col items-center justify-center shrink-0">
+                                <button class="checkbox-glass active border-emerald-500 bg-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.3)] w-7 h-7 rounded-lg flex flex-col items-center justify-center transition-all duration-300 border border-white/20">
+                                    <i class="fa-solid fa-check text-[10px] text-emerald-400"></i>
+                                </button>
+                            </div>
+                        `;
                 } else {
                     checkboxHTML = `
-                        <div class="flex flex-col items-center justify-center shrink-0">
-                            <button class="checkbox-glass ${curRep > 0 && !isCompleted ? 'border-emerald-500/50' : ''} w-7 h-7 rounded-lg flex flex-col items-center justify-center transition-all duration-300 border border-white/20">
-                                <i class="fa-solid fa-check text-[10px] ${isCompleted ? 'text-emerald-400' : 'text-transparent'} transition-colors duration-300"></i>
-                            </button>
-                            ${iterationHTML}
-                        </div>
-                    `;
+                            <div class="flex flex-col items-center justify-center shrink-0">
+                                <button class="checkbox-glass ${curRep > 0 && !isCompleted ? 'border-emerald-500/50' : ''} w-7 h-7 rounded-lg flex flex-col items-center justify-center transition-all duration-300 border border-white/20">
+                                    <i class="fa-solid fa-check text-[10px] ${isCompleted ? 'text-emerald-400' : 'text-transparent'} transition-colors duration-300"></i>
+                                </button>
+                                ${iterationHTML}
+                            </div>
+                        `;
                 }
 
                 taskEl.innerHTML = `
-                    ${checkboxHTML}
-                    <div class="flex-1 transition-all duration-300">
-                        <h3 class="${isCompleted ? 'text-gray-500 line-through' : 'text-white'} font-medium text-base mb-1 transition-colors duration-300">${task.title}</h3>
-                        <p class="text-gray-400 text-xs flex gap-2 items-center">
-                            <i class="fa-regular fa-clock ${isCompleted ? 'text-gray-500' : 'text-emerald-500/70'}"></i> ${task.time}
-                        </p>
-                    </div>
-                    <div class="flex items-center gap-1 shrink-0">
-                        <button onclick="editTask(${task.id}, event)" class="w-8 h-8 rounded-full flex items-center justify-center text-blue-400 opacity-60 hover:opacity-100 hover:bg-blue-500/10 transition-all" title="تعديل">
-                            <i class="fa-solid fa-pen text-sm"></i>
-                        </button>
-                        <button onclick="deleteTask(${task.id}, event)" class="w-8 h-8 rounded-full flex items-center justify-center text-red-400 opacity-60 hover:opacity-100 hover:bg-red-500/10 transition-all" title="حذف نهائي">
-                            <i class="fa-solid fa-trash-can text-sm"></i>
-                        </button>
-                    </div>
-                `;
+                        ${checkboxHTML}
+                        <div class="flex-1 transition-all duration-300">
+                            <h3 class="${isCompleted ? 'text-gray-500 line-through' : 'text-white'} font-medium text-base mb-1 transition-colors duration-300">${task.title}</h3>
+                            <p class="text-gray-400 text-xs flex gap-2 items-center">
+                                <i class="fa-regular fa-clock ${isCompleted ? 'text-gray-500' : 'text-emerald-500/70'}"></i> ${task.time}
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-1 shrink-0">
+                            <button onclick="editTask(${task.id}, event)" class="w-8 h-8 rounded-full flex items-center justify-center text-blue-400 opacity-60 hover:opacity-100 hover:bg-blue-500/10 transition-all" title="تعديل">
+                                <i class="fa-solid fa-pen text-sm"></i>
+                            </button>
+                            <button onclick="deleteTask(${task.id}, event)" class="w-8 h-8 rounded-full flex items-center justify-center text-red-400 opacity-60 hover:opacity-100 hover:bg-red-500/10 transition-all" title="حذف نهائي">
+                                <i class="fa-solid fa-trash-can text-sm"></i>
+                            </button>
+                        </div>
+                    `;
                 container.appendChild(taskEl);
             });
 
@@ -1284,12 +1293,12 @@
             if (isLocalArchive) {
                 const todayStr = formatArabicDate(Date.now());
                 container.innerHTML = `
-                    <div class="flex items-center justify-center gap-4 my-4 opacity-70">
-                        <div class="h-[1px] flex-1 bg-gradient-to-r from-transparent to-white/20"></div>
-                        <span class="text-xs font-bold text-gray-400 tracking-wider">${todayStr}</span>
-                        <div class="h-[1px] flex-1 bg-gradient-to-l from-transparent to-white/20"></div>
-                    </div>
-                `;
+                        <div class="flex items-center justify-center gap-4 my-4 opacity-70">
+                            <div class="h-[1px] flex-1 bg-gradient-to-r from-transparent to-white/20"></div>
+                            <span class="text-xs font-bold text-gray-400 tracking-wider">${todayStr}</span>
+                            <div class="h-[1px] flex-1 bg-gradient-to-l from-transparent to-white/20"></div>
+                        </div>
+                    `;
             }
 
             listToRender.forEach(note => {
@@ -1302,37 +1311,37 @@
                 if (isArchived && isLocalArchive) {
                     // Inside archive: Show a distinctive green check style
                     checkboxHTML = `
-                        <div class="flex flex-col items-center justify-center shrink-0">
-                            <button onclick="unarchiveNote(${note.id}, event)" class="checkbox-glass active border-emerald-500 bg-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.3)] w-7 h-7 rounded-lg flex flex-col items-center justify-center transition-all duration-300 border border-white/20" title="استعادة الملاحظة">
-                                <i class="fa-solid fa-check text-[10px] text-emerald-400"></i>
-                            </button>
-                        </div>
-                    `;
+                            <div class="flex flex-col items-center justify-center shrink-0">
+                                <button onclick="unarchiveNote(${note.id}, event)" class="checkbox-glass active border-emerald-500 bg-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.3)] w-7 h-7 rounded-lg flex flex-col items-center justify-center transition-all duration-300 border border-white/20" title="استعادة الملاحظة">
+                                    <i class="fa-solid fa-check text-[10px] text-emerald-400"></i>
+                                </button>
+                            </div>
+                        `;
                 } else {
                     checkboxHTML = `
-                        <div class="flex flex-col items-center justify-center shrink-0">
-                            <button onclick="archiveNoteDirectly(${note.id}, event)" class="checkbox-glass w-7 h-7 rounded-lg flex flex-col items-center justify-center transition-all duration-300 border border-white/20" title="إنجاز الملاحظة">
-                                <i class="fa-solid fa-check text-[10px] text-transparent hover:text-emerald-400/50 transition-colors duration-300"></i>
-                            </button>
-                        </div>
-                    `;
+                            <div class="flex flex-col items-center justify-center shrink-0">
+                                <button onclick="archiveNoteDirectly(${note.id}, event)" class="checkbox-glass w-7 h-7 rounded-lg flex flex-col items-center justify-center transition-all duration-300 border border-white/20" title="إنجاز الملاحظة">
+                                    <i class="fa-solid fa-check text-[10px] text-transparent hover:text-emerald-400/50 transition-colors duration-300"></i>
+                                </button>
+                            </div>
+                        `;
                 }
 
                 const shortContent = note.content.length > 40 ? note.content.substring(0, 40) + '...' : note.content;
 
                 noteEl.innerHTML = `
-                    ${checkboxHTML}
-                    <div class="flex-1 transition-all duration-300 overflow-hidden">
-                        <h3 class="${isArchived ? 'text-gray-500 line-through' : 'text-white'} font-medium text-base mb-1 transition-colors duration-300 truncate">${note.title}</h3>
-                        <p class="text-gray-400 text-xs truncate">
-                            ${shortContent || 'بدون محتوى'}
-                        </p>
-                        <span class="block text-[10px] text-gray-600 mt-1">${note.updatedAt}</span>
-                    </div>
-                    <button onclick="deleteNoteDirectly(${note.id}, event)" class="w-8 h-8 rounded-full flex items-center justify-center text-red-400 opacity-60 hover:opacity-100 hover:bg-red-500/10 transition-all" title="حذف نهائي">
-                        <i class="fa-solid fa-trash-can text-sm"></i>
-                    </button>
-                `;
+                        ${checkboxHTML}
+                        <div class="flex-1 transition-all duration-300 overflow-hidden">
+                            <h3 class="${isArchived ? 'text-gray-500 line-through' : 'text-white'} font-medium text-base mb-1 transition-colors duration-300 truncate">${note.title}</h3>
+                            <p class="text-gray-400 text-xs truncate">
+                                ${shortContent || 'بدون محتوى'}
+                            </p>
+                            <span class="block text-[10px] text-gray-600 mt-1">${note.updatedAt}</span>
+                        </div>
+                        <button onclick="deleteNoteDirectly(${note.id}, event)" class="w-8 h-8 rounded-full flex items-center justify-center text-red-400 opacity-60 hover:opacity-100 hover:bg-red-500/10 transition-all" title="حذف نهائي">
+                            <i class="fa-solid fa-trash-can text-sm"></i>
+                        </button>
+                    `;
                 container.appendChild(noteEl);
             });
 
@@ -1405,12 +1414,12 @@
 
                 // Add Divider
                 container.innerHTML += `
-                    <div class="flex items-center justify-center gap-4 my-2 opacity-70 mt-6">
-                        <div class="h-[1px] flex-1 bg-gradient-to-r from-transparent to-emerald-500/50"></div>
-                        <span class="text-sm font-bold text-emerald-400 tracking-wider">${dateStr}</span>
-                        <div class="h-[1px] flex-1 bg-gradient-to-l from-transparent to-emerald-500/50"></div>
-                    </div>
-                `;
+                        <div class="flex items-center justify-center gap-4 my-2 opacity-70 mt-6">
+                            <div class="h-[1px] flex-1 bg-gradient-to-r from-transparent to-emerald-500/50"></div>
+                            <span class="text-sm font-bold text-emerald-400 tracking-wider">${dateStr}</span>
+                            <div class="h-[1px] flex-1 bg-gradient-to-l from-transparent to-emerald-500/50"></div>
+                        </div>
+                    `;
 
                 // Add Items
                 items.forEach(item => {
@@ -1419,28 +1428,28 @@
 
                     if (type === 'tasks') {
                         el.innerHTML = `
-                            <div class="flex flex-col items-center justify-center shrink-0">
-                                <div class="checkbox-glass active border-emerald-500 bg-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.3)] w-7 h-7 rounded-lg flex flex-col items-center justify-center border border-white/20">
-                                    <i class="fa-solid fa-check text-[10px] text-emerald-400"></i>
+                                <div class="flex flex-col items-center justify-center shrink-0">
+                                    <div class="checkbox-glass active border-emerald-500 bg-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.3)] w-7 h-7 rounded-lg flex flex-col items-center justify-center border border-white/20">
+                                        <i class="fa-solid fa-check text-[10px] text-emerald-400"></i>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="flex-1 overflow-hidden">
-                                <h3 class="text-gray-400 line-through font-medium text-base mb-1 truncate">${item.title}</h3>
-                                <p class="text-gray-500 text-xs truncate">
-                                    <i class="fa-regular fa-clock"></i> ${item.time}
-                                </p>
-                            </div>
-                        `;
+                                <div class="flex-1 overflow-hidden">
+                                    <h3 class="text-gray-400 line-through font-medium text-base mb-1 truncate">${item.title}</h3>
+                                    <p class="text-gray-500 text-xs truncate">
+                                        <i class="fa-regular fa-clock"></i> ${item.time}
+                                    </p>
+                                </div>
+                            `;
                     } else {
                         const shortContent = item.content.length > 40 ? item.content.substring(0, 40) + '...' : item.content;
                         el.innerHTML = `
-                            <div class="flex-1 overflow-hidden">
-                                <h3 class="text-gray-400 line-through font-medium text-base mb-1 truncate">${item.title}</h3>
-                                <p class="text-gray-500 text-xs truncate">
-                                    ${shortContent || 'بدون محتوى'}
-                                </p>
-                            </div>
-                        `;
+                                <div class="flex-1 overflow-hidden">
+                                    <h3 class="text-gray-400 line-through font-medium text-base mb-1 truncate">${item.title}</h3>
+                                    <p class="text-gray-500 text-xs truncate">
+                                        ${shortContent || 'بدون محتوى'}
+                                    </p>
+                                </div>
+                            `;
                         el.onclick = () => openNoteModal(item.id);
                         el.style.cursor = 'pointer';
                     }

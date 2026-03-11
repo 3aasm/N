@@ -691,6 +691,25 @@
                             class="w-16 bg-transparent text-white text-center font-bold focus:outline-none focus:border-emerald-500/50 transition-all">
                     </div>
                 </div>
+
+                <!-- Priority Selection -->
+                <div class="mt-4">
+                    <span class="text-gray-400 text-sm mb-2 block">مدى الأهمية:</span>
+                    <div class="flex gap-2">
+                        <button onclick="setTaskPriority('important')" id="priority-important"
+                            class="priority-btn flex-1 py-3 rounded-xl border border-white/10 text-xs font-bold text-gray-400 transition-all active:scale-95">
+                            مهم جداً <i class="fa-solid fa-fire mr-1"></i>
+                        </button>
+                        <button onclick="setTaskPriority('medium')" id="priority-medium"
+                            class="priority-btn flex-1 py-3 rounded-xl border border-white/10 text-xs font-bold text-gray-400 transition-all active:scale-95">
+                            متوسط <i class="fa-solid fa-fire mr-1"></i>
+                        </button>
+                        <button onclick="setTaskPriority('normal')" id="priority-normal"
+                            class="priority-btn flex-1 py-3 rounded-xl border border-white/10 text-xs font-bold text-gray-400 transition-all active:scale-95">
+                            عادي <i class="fa-solid fa-fire mr-1"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <button onclick="saveTask()"
@@ -1027,6 +1046,7 @@
                     task.time = timeInput.value || 'بدون وقت';
                     task.maxRepetitions = maxRep;
                     task.notifBefore = notifBefore;
+                    task.priority = currentSelectedPriority;
                 }
                 currentEditingTaskId = null;
             } else {
@@ -1039,7 +1059,8 @@
                     notified: false,
                     currentRepetition: 0,
                     completed: false,
-                    archivedAt: null
+                    archivedAt: null,
+                    priority: currentSelectedPriority
                 };
                 tasks.unshift(newTask);
             }
@@ -1062,6 +1083,7 @@
                 document.getElementById('newTaskTime').value = task.time !== 'بدون وقت' ? task.time : '';
                 document.getElementById('newTaskRepetitions').value = task.maxRepetitions || 1;
                 document.getElementById('newTaskNotifBefore').value = task.notifBefore || 5;
+                setTaskPriority(task.priority || 'normal');
                 openTaskModal();
             }
         }
@@ -1106,6 +1128,7 @@
             customConfirm('هل أنت متأكد من حذف هذه المهمة نهائياً؟', () => {
                 tasks = tasks.filter(t => t.id !== id);
                 saveTasks();
+                closeConfirmModal();
             });
         }
 
@@ -1118,6 +1141,7 @@
             customConfirm('هل أنت متأكد من حذف جميع المهام المنجزة نهائياً؟', () => {
                 tasks = tasks.filter(t => !t.completed);
                 saveTasks();
+                closeConfirmModal();
             });
         }
 
@@ -1191,6 +1215,7 @@
             customConfirm('هل أنت متأكد من حذف الملاحظة نهائياً؟', () => {
                 notes = notes.filter(n => n.id !== id);
                 saveNotesData();
+                closeConfirmModal();
             });
         }
 
@@ -1203,6 +1228,7 @@
             customConfirm('هل أنت متأكد من حذف جميع الملاحظات في الأرشيف نهائياً؟', () => {
                 notes = notes.filter(n => !n.archived);
                 saveNotesData();
+                closeConfirmModal();
             });
         }
 
@@ -1304,13 +1330,23 @@
                         `;
                 }
 
+                const priority = task.priority || 'normal';
+                let priorityIcon = '';
+                if (priority === 'important') priorityIcon = '<i class="fa-solid fa-fire text-red-500 text-[10px]"></i>';
+                else if (priority === 'medium') priorityIcon = '<i class="fa-solid fa-fire text-blue-400 text-[10px]"></i>';
+                else if (priority === 'normal') priorityIcon = '<i class="fa-solid fa-fire text-gray-400 text-[10px]"></i>';
+
                 taskEl.innerHTML = `
                         ${checkboxHTML}
                         <div class="flex-1 transition-all duration-300">
                             <h3 class="${isCompleted ? 'text-gray-500 line-through' : 'text-white'} font-medium text-base mb-1 transition-colors duration-300">${task.title}</h3>
-                            <p class="text-gray-400 text-xs flex gap-2 items-center">
-                                <i class="fa-regular fa-clock ${isCompleted ? 'text-gray-500' : 'text-emerald-500/70'}"></i> ${task.time}
-                            </p>
+                            <div class="flex items-center gap-2">
+                                ${priorityIcon}
+                                <div class="px-2 py-0.5 rounded-lg border border-white/10 bg-white/5 flex items-center gap-1.5 text-gray-400 text-[10px]">
+                                    <i class="fa-regular fa-clock ${isCompleted ? 'text-gray-500' : 'text-emerald-500/70'}"></i>
+                                    <span>${task.time}</span>
+                                </div>
+                            </div>
                         </div>
                         <div class="flex items-center gap-1 shrink-0">
                             <button onclick="editTask(${task.id}, event)" class="w-8 h-8 rounded-full flex items-center justify-center text-blue-400 opacity-60 hover:opacity-100 hover:bg-blue-500/10 transition-all" title="تعديل">
@@ -1525,6 +1561,7 @@
                 saveNotesData();
                 renderGlobalArchive('tasks');
                 renderGlobalArchive('notes');
+                closeConfirmModal();
             });
         }
 
@@ -1611,6 +1648,9 @@
                 cont.classList.remove('translate-y-full', 'sm:scale-95');
                 cont.classList.add('translate-y-0', 'sm:scale-100');
             });
+            if (!currentEditingTaskId) {
+                setTaskPriority('normal');
+            }
             setTimeout(() => document.getElementById('newTaskTitle').focus(), 300);
         }
 
@@ -1777,6 +1817,12 @@
             pendingConfirmCallback = acceptCallback;
             const modal = document.getElementById('confirmModal');
             const cont = modal.querySelector('.glass-panel');
+            const confirmBtn = document.getElementById('confirmActionBtn');
+
+            // Reset button state
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = 'نعم، متأكد';
+            confirmBtn.classList.remove('opacity-50', 'cursor-not-allowed');
 
             modal.classList.remove('hidden');
             modal.classList.add('flex');
@@ -1785,6 +1831,23 @@
                 cont.classList.remove('scale-95');
                 cont.classList.add('scale-100');
             });
+        }
+
+        let currentSelectedPriority = 'normal';
+        function setTaskPriority(p) {
+            currentSelectedPriority = p;
+            document.querySelectorAll('.priority-btn').forEach(btn => {
+                btn.classList.remove('border-red-500', 'bg-red-500/10', 'text-red-400', 'border-blue-400', 'bg-blue-400/10', 'text-blue-400', 'border-emerald-500', 'bg-emerald-500/10', 'text-emerald-400');
+                btn.classList.add('border-white/10', 'text-gray-400');
+            });
+
+            const target = document.getElementById(`priority-${p}`);
+            if (target) {
+                target.classList.remove('border-white/10', 'text-gray-400');
+                if (p === 'important') target.classList.add('border-red-500', 'bg-red-500/10', 'text-red-400');
+                else if (p === 'medium') target.classList.add('border-blue-400', 'bg-blue-400/10', 'text-blue-400');
+                else target.classList.add('border-emerald-500', 'bg-emerald-500/10', 'text-emerald-400');
+            }
         }
 
         function closeConfirmModal() {
@@ -1803,7 +1866,7 @@
 
         document.getElementById('confirmActionBtn').onclick = () => {
             if (pendingConfirmCallback) pendingConfirmCallback();
-            closeConfirmModal();
+            // Responsibility for closing is now on the callback
         };
 
         function setSystemWallpaper(type) {
@@ -1903,11 +1966,28 @@
         // Utilities
         // -------------------------
         function clearAllData() {
-            customConfirm('هل أنت متأكد من مسح كافة المهام والملاحظات والإعدادات بصورة نهائية؟', () => {
-                tasks = [];
-                notes = [];
-                localStorage.clear();
-                window.location.reload();
+            customConfirm('هل أنت متأكد من مسح كافة البيانات بصورة نهائية؟ سيتم إعادة تشغيل التطبيق.', () => {
+                const confirmBtn = document.getElementById('confirmActionBtn');
+                confirmBtn.disabled = true;
+                confirmBtn.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin ml-2"></i> جاري المسح...';
+                confirmBtn.classList.add('opacity-80', 'cursor-not-allowed');
+
+                // Wait for a split second for psychological feedback
+                setTimeout(() => {
+                    closeConfirmModal();
+                    
+                    // Wait for modal to finish closing animation (300ms)
+                    setTimeout(() => {
+                        // Apply fade out effect to body
+                        document.body.style.transition = 'opacity 0.5s ease-out';
+                        document.body.style.opacity = '0';
+                        
+                        setTimeout(() => {
+                            localStorage.clear();
+                            window.location.reload();
+                        }, 500);
+                    }, 300);
+                }, 800);
             });
         }
 

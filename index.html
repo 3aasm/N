@@ -1531,6 +1531,8 @@
             let pullDistance = 0;
             const PULL_THRESHOLD = 80;
             let isAtBottom = false;
+            let isScatterAnimating = false; // Cooldown flag
+
 
             document.addEventListener('touchstart', e => {
                 const target = e.target.closest('.view-section');
@@ -1572,10 +1574,14 @@
                         // Spring-back animation
                         list.style.transition = 'transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
                         list.style.transform = '';
+                        // Remove transition after it finishes to avoid conflicts with next drag
+                        setTimeout(() => {
+                            if (pullDistance === 0) list.style.transition = 'none';
+                        }, 600);
                     }
                 }
 
-                if (isAtBottom && pullDistance > PULL_THRESHOLD) {
+                if (isAtBottom && pullDistance > PULL_THRESHOLD && !isScatterAnimating) {
                     triggerScatterAnimation();
                 }
                 
@@ -1585,8 +1591,14 @@
         }
 
         function triggerScatterAnimation() {
+            if (isScatterAnimating) return;
+            isScatterAnimating = true;
+
             const container = document.getElementById('global-scatter-container');
-            if (!container) return;
+            if (!container) {
+                isScatterAnimating = false;
+                return;
+            }
             
             container.innerHTML = '';
             const icons = ['fa-check-double', 'fa-note-sticky', 'fa-star', 'fa-fire', 'fa-bolt', 'fa-heart'];
@@ -1608,7 +1620,7 @@
                 icon.style.setProperty('--ty', `${ty}px`);
                 icon.style.setProperty('--rot', `${rot}deg`);
                 icon.style.left = '50%';
-                icon.style.bottom = '80px'; // Higher up to stay above the bottom nav area start
+                icon.style.bottom = '80px'; 
                 icon.style.animationDelay = `${Math.random() * 0.2}s`;
                 
                 container.appendChild(icon);
@@ -1617,9 +1629,9 @@
             // Clean up after animation
             setTimeout(() => {
                 container.innerHTML = '';
+                isScatterAnimating = false;
             }, 1200);
             
-            // Haptic/Sound feedback if possible
             if (window.navigator.vibrate) window.navigator.vibrate(10);
         }
 

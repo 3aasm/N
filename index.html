@@ -1081,7 +1081,7 @@
             <div class="text-center text-gray-400 text-sm leading-relaxed px-4">
                 تطبيق بسيط ومنظم لمساعدتك على تدوين ملاحضاتك وادارة مهامك اليومية بكفاءة عالية.
                 <div class="mt-4 pt-4 border-t border-white/5 text-[10px] opacity-60">
-                    آخر تحديث: <span class="font-mono">2026-03-14</span> | <span class="font-mono">10:57 مساءً</span>
+                    آخر تحديث: <span class="font-mono">2026-03-14</span> | <span class="font-mono">11:00 مساءً</span>
                 </div>
             </div>
         </div>
@@ -1560,7 +1560,7 @@
                 const list = activeView.querySelector('div.flex.flex-col.gap-4') || activeView.querySelector('.space-y-6');
                 if (!list) return;
 
-                // 1. Transition from scrolling to stretching
+                // 1. Transition logic: Check if we just hit a boundary while scrolling
                 if (!currentPullType) {
                     if (isAtTop && totalDiff < 0) {
                         currentPullType = 'top';
@@ -1571,7 +1571,7 @@
                     }
                 }
 
-                // 2. Handle active stretching
+                // 2. Handle the stretching effect
                 if (currentPullType === 'top') {
                     const pullDist = Math.max(0, currentY - pullOriginY);
                     if (pullDist > 0) {
@@ -1580,6 +1580,7 @@
                         list.style.transition = 'none';
                         if (e.cancelable) e.preventDefault();
                     } else {
+                        // User swiped back into normal scroll territory
                         currentPullType = null;
                         list.style.transform = '';
                     }

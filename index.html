@@ -629,27 +629,26 @@
 
             <!-- Refined Premium Greeting Card -->
             <div
-                class="glass-panel h-20 px-8 rounded-[2rem] bg-gradient-to-br from-gray-800/40 to-transparent border-white/5 relative overflow-hidden flex-1 flex items-center">
-                <div class="relative z-10 flex justify-between items-center w-full">
-                    <div class="flex items-center gap-8">
-                        <div class="space-y-1 text-right">
-                            <div class="flex items-center gap-3">
-                                <span class="glow-dot w-2 h-2"></span>
-                                <h2 class="text-3xl font-black text-white tracking-tighter drop-shadow-lg">أهلاً بك 👋</h2>
-                            </div>
-                            <p id="dashboard-date" class="text-gray-400 text-xs font-bold arabic-date opacity-60">جاري التحميل ...</p>
+                class="glass-panel h-20 px-4 sm:px-8 rounded-[2rem] bg-gradient-to-br from-gray-800/40 to-transparent border-white/5 relative overflow-hidden flex-1 flex items-center">
+                <div class="relative z-10 flex justify-between items-center w-full gap-2">
+                    <div class="space-y-0.5 sm:space-y-1 text-right shrink-0">
+                        <div class="flex items-center gap-2 sm:gap-3">
+                            <span class="glow-dot w-2 h-2 shrink-0"></span>
+                            <h2 class="text-xl sm:text-3xl font-black text-white tracking-tighter drop-shadow-lg whitespace-nowrap">أهلاً بك 👋</h2>
                         </div>
-                        
-                        <!-- Integrated Stats (Better Presence) -->
-                        <div class="h-10 w-[1px] bg-white/10 mx-2"></div>
-                        <div class="flex gap-6">
-                            <div class="flex flex-col items-start">
-                                <span class="text-gray-400 text-[9px] font-black uppercase tracking-widest opacity-50">نشطة</span>
-                                <span id="stat-total" class="text-xl font-black text-white">0</span>
+                        <p id="dashboard-date" class="text-gray-300 text-[10px] sm:text-sm font-bold arabic-date whitespace-nowrap">جاري التحميل ...</p>
+                    </div>
+
+                    <div class="flex items-center gap-3 sm:gap-6 shrink-0">
+                        <div class="h-8 sm:h-10 w-[1px] bg-white/20 shrink-0"></div>
+                        <div class="flex gap-3 sm:gap-6">
+                            <div class="flex flex-col items-center justify-center">
+                                <span class="text-gray-300 text-[9px] sm:text-xs font-bold uppercase tracking-widest leading-none mb-1">نشطة</span>
+                                <span id="stat-total" class="text-xl sm:text-2xl font-black text-white leading-none">0</span>
                             </div>
-                            <div class="flex flex-col items-start">
-                                <span class="text-emerald-400/80 text-[9px] font-black uppercase tracking-widest opacity-50">تمت</span>
-                                <span id="stat-completed" class="text-xl font-black text-emerald-400">0</span>
+                            <div class="flex flex-col items-center justify-center">
+                                <span class="text-emerald-400 text-[9px] sm:text-xs font-bold uppercase tracking-widest leading-none mb-1">تمت</span>
+                                <span id="stat-completed" class="text-xl sm:text-2xl font-black text-emerald-400 leading-none">0</span>
                             </div>
                         </div>
                     </div>

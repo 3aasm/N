@@ -1543,12 +1543,16 @@
             let activePullType = null; // 'top' or 'bottom'
 
             document.addEventListener('touchstart', e => {
+                const scrollContainer = document.getElementById('main-scroll-container');
+                if (!scrollContainer) return;
+                
                 const target = e.target.closest('.view-section');
                 if (!target) return;
 
-                // Check if target is scrolled to bottom or top
-                isAtBottom = (target.scrollHeight - target.scrollTop <= target.clientHeight + 1);
-                isAtTop = (target.scrollTop <= 1);
+                // Detect scroll state using the main container (the true scroller)
+                isAtBottom = (scrollContainer.scrollHeight - scrollContainer.scrollTop <= scrollContainer.clientHeight + 2);
+                isAtTop = (scrollContainer.scrollTop <= 2);
+                
                 lastY = e.touches[0].pageY;
                 pullDistance = 0;
                 activePullType = null;
@@ -1568,13 +1572,14 @@
                 if (diff > 0 && isAtBottom) {
                     activePullType = 'bottom';
                     pullDistance = diff;
-                    const damped = Math.log10(1 + pullDistance / 100) * 120;
+                    // Logarithmic damping for elasticity (Multiplier increased from 120 to 220 as requested)
+                    const damped = Math.log10(1 + pullDistance / 100) * 220;
                     list.style.transform = `translateY(${-damped}px)`;
                     list.style.transition = 'none';
                 } else if (diff < 0 && isAtTop) {
                     activePullType = 'top';
                     pullDistance = Math.abs(diff);
-                    const damped = Math.log10(1 + pullDistance / 100) * 120;
+                    const damped = Math.log10(1 + pullDistance / 100) * 220;
                     list.style.transform = `translateY(${damped}px)`;
                     list.style.transition = 'none';
                 }

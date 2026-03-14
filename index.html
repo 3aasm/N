@@ -1540,6 +1540,8 @@
             let isAtBottom = false;
             let isAtTop = false;
 
+            let activePullType = null; // 'top' or 'bottom'
+
             document.addEventListener('touchstart', e => {
                 const target = e.target.closest('.view-section');
                 if (!target) return;
@@ -1549,6 +1551,7 @@
                 isAtTop = (target.scrollTop <= 1);
                 lastY = e.touches[0].pageY;
                 pullDistance = 0;
+                activePullType = null;
             }, { passive: true });
 
             document.addEventListener('touchmove', e => {
@@ -1557,30 +1560,23 @@
                 const currentY = e.touches[0].pageY;
                 const diff = lastY - currentY; // Positive = pulling UP, Negative = pulling DOWN
 
+                const activeView = document.querySelector('.view-section:not(.hidden)');
+                if (!activeView) return;
+                const list = activeView.querySelector('div.flex.flex-col.gap-4') || activeView.querySelector('.space-y-6');
+                if (!list) return;
+
                 if (diff > 0 && isAtBottom) {
+                    activePullType = 'bottom';
                     pullDistance = diff;
                     const damped = Math.log10(1 + pullDistance / 100) * 120;
-
-                    const activeView = document.querySelector('.view-section:not(.hidden)');
-                    if (activeView) {
-                        const list = activeView.querySelector('div.flex.flex-col.gap-4') || activeView.querySelector('.space-y-6');
-                        if (list) {
-                            list.style.transform = `translateY(${-damped}px)`;
-                            list.style.transition = 'none';
-                        }
-                    }
+                    list.style.transform = `translateY(${-damped}px)`;
+                    list.style.transition = 'none';
                 } else if (diff < 0 && isAtTop) {
+                    activePullType = 'top';
                     pullDistance = Math.abs(diff);
                     const damped = Math.log10(1 + pullDistance / 100) * 120;
-
-                    const activeView = document.querySelector('.view-section:not(.hidden)');
-                    if (activeView) {
-                        const list = activeView.querySelector('div.flex.flex-col.gap-4') || activeView.querySelector('.space-y-6');
-                        if (list) {
-                            list.style.transform = `translateY(${damped}px)`;
-                            list.style.transition = 'none';
-                        }
-                    }
+                    list.style.transform = `translateY(${damped}px)`;
+                    list.style.transition = 'none';
                 }
             }, { passive: false });
 
@@ -1589,19 +1585,19 @@
                 if (activeView) {
                     const list = activeView.querySelector('div.flex.flex-col.gap-4') || activeView.querySelector('.space-y-6');
                     if (list) {
-                        // Spring-back animation
                         list.style.transition = 'transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
                         list.style.transform = '';
                     }
                 }
 
-                if (isAtBottom && pullDistance > PULL_THRESHOLD && !isAtTop) {
+                if (activePullType === 'bottom' && pullDistance > PULL_THRESHOLD) {
                     triggerScatterAnimation();
                 }
 
                 pullDistance = 0;
                 isAtBottom = false;
                 isAtTop = false;
+                activePullType = null;
             }, { passive: true });
         }
 

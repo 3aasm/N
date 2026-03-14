@@ -1081,7 +1081,7 @@
             <div class="text-center text-gray-400 text-sm leading-relaxed px-4">
                 تطبيق بسيط ومنظم لمساعدتك على تدوين ملاحضاتك وادارة مهامك اليومية بكفاءة عالية.
                 <div class="mt-4 pt-4 border-t border-white/5 text-[10px] opacity-60">
-                    آخر تحديث: <span class="font-mono">2026-03-14</span> | <span class="font-mono">11:00 مساءً</span>
+                    آخر تحديث: <span class="font-mono">2026-03-14</span> | <span class="font-mono">10:05 مساءً</span>
                 </div>
             </div>
         </div>
@@ -1534,71 +1534,56 @@
         // Bottom Pull Animation Logic
         // -------------------------
         function initBottomPullAnimation() {
-            let startY = 0;
-            let currentPullType = null; // 'top', 'bottom', or null
-            let pullOriginY = 0;
+            let lastY = 0;
+            let pullDistance = 0;
             const PULL_THRESHOLD = 80;
-
-            const scrollContainer = document.getElementById('main-scroll-container');
-            if (!scrollContainer) return;
+            let isAtBottom = false;
+            let isAtTop = false;
+            let activePullType = null;
 
             document.addEventListener('touchstart', e => {
-                startY = e.touches[0].pageY;
-                currentPullType = null;
+                const scrollContainer = document.getElementById('main-scroll-container');
+                if (!scrollContainer) return;
+
+                const viewSection = e.target.closest('.view-section');
+                if (!viewSection) return;
+
+                // Detect scroll state on the container
+                isAtBottom = (scrollContainer.scrollHeight - scrollContainer.scrollTop <= scrollContainer.clientHeight + 2);
+                isAtTop = (scrollContainer.scrollTop <= 2);
+                
+                lastY = e.touches[0].pageY;
+                pullDistance = 0;
+                activePullType = null;
             }, { passive: true });
 
             document.addEventListener('touchmove', e => {
-                const currentY = e.touches[0].pageY;
-                const totalDiff = startY - currentY; // Positive = UP (scrolling down), Negative = DOWN (scrolling up)
+                if (!isAtBottom && !isAtTop) return;
 
-                // Detect boundaries
-                const isAtTop = scrollContainer.scrollTop <= 2;
-                const isAtBottom = scrollContainer.scrollHeight - scrollContainer.scrollTop <= scrollContainer.clientHeight + 2;
+                const currentY = e.touches[0].pageY;
+                const diff = lastY - currentY; // Positive = pulling UP, Negative = pulling DOWN
 
                 const activeView = document.querySelector('.view-section:not(.hidden)');
                 if (!activeView) return;
                 const list = activeView.querySelector('div.flex.flex-col.gap-4') || activeView.querySelector('.space-y-6');
                 if (!list) return;
 
-                // 1. Transition logic: Check if we just hit a boundary while scrolling
-                if (!currentPullType) {
-                    if (isAtTop && totalDiff < 0) {
-                        currentPullType = 'top';
-                        pullOriginY = currentY;
-                    } else if (isAtBottom && totalDiff > 0) {
-                        currentPullType = 'bottom';
-                        pullOriginY = currentY;
-                    }
-                }
-
-                // 2. Handle the stretching effect
-                if (currentPullType === 'top') {
-                    const pullDist = Math.max(0, currentY - pullOriginY);
-                    if (pullDist > 0) {
-                        const damped = Math.log10(1 + pullDist / 100) * 220;
-                        list.style.transform = `translateY(${damped}px)`;
-                        list.style.transition = 'none';
-                        if (e.cancelable) e.preventDefault();
-                    } else {
-                        // User swiped back into normal scroll territory
-                        currentPullType = null;
-                        list.style.transform = '';
-                    }
-                } else if (currentPullType === 'bottom') {
-                    const pullDist = Math.max(0, pullOriginY - currentY);
-                    if (pullDist > 0) {
-                        const damped = Math.log10(1 + pullDist / 100) * 220;
-                        list.style.transform = `translateY(${-damped}px)`;
-                        list.style.transition = 'none';
-                        if (e.cancelable) e.preventDefault();
-                    } else {
-                        currentPullType = null;
-                        list.style.transform = '';
-                    }
+                if (diff > 0 && isAtBottom) {
+                    activePullType = 'bottom';
+                    pullDistance = diff;
+                    const damped = Math.log10(1 + pullDistance / 100) * 120;
+                    list.style.transform = `translateY(${-damped}px)`;
+                    list.style.transition = 'none';
+                } else if (diff < 0 && isAtTop) {
+                    activePullType = 'top';
+                    pullDistance = Math.abs(diff);
+                    const damped = Math.log10(1 + pullDistance / 100) * 120;
+                    list.style.transform = `translateY(${damped}px)`;
+                    list.style.transition = 'none';
                 }
             }, { passive: false });
 
-            document.addEventListener('touchend', e => {
+            document.addEventListener('touchend', () => {
                 const activeView = document.querySelector('.view-section:not(.hidden)');
                 if (activeView) {
                     const list = activeView.querySelector('div.flex.flex-col.gap-4') || activeView.querySelector('.space-y-6');
@@ -1608,16 +1593,14 @@
                     }
                 }
 
-                if (currentPullType === 'bottom') {
-                    const endTouch = e.changedTouches[0];
-                    if (endTouch) {
-                        const finalDist = pullOriginY - endTouch.pageY;
-                        if (finalDist > PULL_THRESHOLD) {
-                            triggerScatterAnimation();
-                        }
-                    }
+                if (activePullType === 'bottom' && pullDistance > PULL_THRESHOLD) {
+                    triggerScatterAnimation();
                 }
-                currentPullType = null;
+
+                pullDistance = 0;
+                isAtBottom = false;
+                isAtTop = false;
+                activePullType = null;
             }, { passive: true });
         }
 

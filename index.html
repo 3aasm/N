@@ -1081,7 +1081,7 @@
             <div class="text-center text-gray-400 text-sm leading-relaxed px-4">
                 تطبيق بسيط ومنظم لمساعدتك على تدوين ملاحضاتك وادارة مهامك اليومية بكفاءة عالية.
                 <div class="mt-4 pt-4 border-t border-white/5 text-[10px] opacity-60">
-                    آخر تحديث: <span class="font-mono">2026-03-14</span> | <span class="font-mono">10:09 مساءً</span>
+                    آخر تحديث: <span class="font-mono">2026-03-14</span> | <span class="font-mono">12:00 مساءً</span>
                 </div>
             </div>
         </div>
@@ -1539,7 +1539,7 @@
             let gestureState = 'IDLE'; // IDLE, SCROLLING, STRETCHING
             let activeList = null;
             let activeType = null; // 'top', 'bottom'
-            
+
             const PULL_THRESHOLD = 80;
             const DAMPING_FACTOR = 160;
 
@@ -1553,12 +1553,17 @@
                 return activeView.querySelector('div.flex.flex-col.gap-4') || activeView.querySelector('.space-y-6');
             }
 
+            // iOS Rubber-Band Formula
+            function applyRubberBand(distance, dimension) {
+                return (1.0 - (1.0 / ((distance * CONSTANT / dimension) + 1.0))) * dimension;
+            }
+
             document.addEventListener('touchstart', e => {
                 startY = e.touches[0].pageY;
                 gestureState = 'IDLE';
                 activeType = null;
                 currentPull = 0;
-                
+
                 activeList = getActiveList();
                 if (activeList) {
                     activeList.style.willChange = 'transform';
@@ -1573,11 +1578,11 @@
 
                 const currentY = e.touches[0].pageY;
                 const diff = startY - currentY; // Positive = UP, Negative = DOWN
-                
+
                 // Robust boundary detection
                 const isAtTop = scrollContainer.scrollTop <= 0;
                 const isAtBottom = (scrollContainer.scrollHeight - scrollContainer.scrollTop) <= (scrollContainer.clientHeight + 1);
-                
+
                 // State Transition Logic
                 if (gestureState === 'IDLE') {
                     if ((isAtTop && diff < 0) || (isAtBottom && diff > 0)) {
@@ -1588,32 +1593,25 @@
                 }
 
                 if (gestureState === 'STRETCHING') {
-                    // Prevent native scroll to take over the transformation
                     if (e.cancelable) e.preventDefault();
 
-                    // Natural Elastic Damping (Logarithmic)
                     const absDiff = Math.abs(diff);
-                    currentPull = Math.log10(1 + absDiff / 100) * DAMPING_FACTOR;
+                    // Use iOS Damping (viewHeight approx 600-800)
+                    const viewHeight = scrollContainer.clientHeight || 600;
+                    currentPull = applyRubberBand(absDiff, viewHeight);
                     
                     if (isAtTop && diff < 0) {
-                        // Top-Down Stretch
                         activeType = 'top';
                         activeList.style.transform = `translate3d(0, ${currentPull}px, 0)`;
                     } else if (isAtBottom && diff > 0) {
-                        // Bottom-Up Stretch
                         activeType = 'bottom';
                         activeList.style.transform = `translate3d(0, ${-currentPull}px, 0)`;
                     } else {
-                        // Handle reverse stretch at boundaries if content is small
                         const canScroll = scrollContainer.scrollHeight > scrollContainer.clientHeight + 2;
                         if (!canScroll) {
-                            if (diff > 0) {
-                                activeList.style.transform = `translate3d(0, ${-currentPull}px, 0)`;
-                            } else {
-                                activeList.style.transform = `translate3d(0, ${currentPull}px, 0)`;
-                            }
+                            const pullDirectional = diff > 0 ? -currentPull : currentPull;
+                            activeList.style.transform = `translate3d(0, ${pullDirectional}px, 0)`;
                         } else {
-                            // If we move away from boundary, reset to native scroll
                             gestureState = 'SCROLLING';
                             activeList.style.transform = '';
                         }
@@ -1624,15 +1622,14 @@
 
             document.addEventListener('touchend', e => {
                 if (activeList) {
-                    // Premium organic snap-back
-                    activeList.style.transition = 'transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)';
+                    // iOS Characteristic Spring Easing
+                    activeList.style.transition = 'transform 0.5s cubic-bezier(0.19, 1, 0.22, 1)';
                     activeList.style.transform = '';
                     
-                    // Cleanup will-change
                     const target = activeList;
                     setTimeout(() => { 
                         if (target) target.style.willChange = ''; 
-                    }, 600);
+                    }, 500);
                 }
 
                 // Check for Scatter Trigger (Bottom pull only)

@@ -710,7 +710,7 @@
 
         </header>
 
-        <div class="flex-1 overflow-y-auto overscroll-none hide-scrollbar px-6 pb-32 z-10 w-full relative"
+        <div class="flex-1 overflow-y-auto overscroll-none hide-scrollbar px-6 pb-6 z-10 w-full relative"
             id="main-scroll-container">
 
             <!-- VIEW: DASHBOARD -->
@@ -1538,26 +1538,27 @@
             let pullDistance = 0;
             const PULL_THRESHOLD = 80;
             let isAtBottom = false;
+            let isAtTop = false;
 
             document.addEventListener('touchstart', e => {
                 const target = e.target.closest('.view-section');
                 if (!target) return;
 
-                // Check if target is scrolled to bottom
+                // Check if target is scrolled to bottom or top
                 isAtBottom = (target.scrollHeight - target.scrollTop <= target.clientHeight + 1);
+                isAtTop = (target.scrollTop <= 1);
                 lastY = e.touches[0].pageY;
                 pullDistance = 0;
             }, { passive: true });
 
             document.addEventListener('touchmove', e => {
-                if (!isAtBottom) return;
+                if (!isAtBottom && !isAtTop) return;
 
                 const currentY = e.touches[0].pageY;
-                const diff = lastY - currentY; // Positive means pulling UP
+                const diff = lastY - currentY; // Positive = pulling UP, Negative = pulling DOWN
 
-                if (diff > 0) {
+                if (diff > 0 && isAtBottom) {
                     pullDistance = diff;
-                    // Logarithmic damping for elasticity
                     const damped = Math.log10(1 + pullDistance / 100) * 120;
 
                     const activeView = document.querySelector('.view-section:not(.hidden)');
@@ -1565,6 +1566,18 @@
                         const list = activeView.querySelector('div.flex.flex-col.gap-4') || activeView.querySelector('.space-y-6');
                         if (list) {
                             list.style.transform = `translateY(${-damped}px)`;
+                            list.style.transition = 'none';
+                        }
+                    }
+                } else if (diff < 0 && isAtTop) {
+                    pullDistance = Math.abs(diff);
+                    const damped = Math.log10(1 + pullDistance / 100) * 120;
+
+                    const activeView = document.querySelector('.view-section:not(.hidden)');
+                    if (activeView) {
+                        const list = activeView.querySelector('div.flex.flex-col.gap-4') || activeView.querySelector('.space-y-6');
+                        if (list) {
+                            list.style.transform = `translateY(${damped}px)`;
                             list.style.transition = 'none';
                         }
                     }
@@ -1582,12 +1595,13 @@
                     }
                 }
 
-                if (isAtBottom && pullDistance > PULL_THRESHOLD) {
+                if (isAtBottom && pullDistance > PULL_THRESHOLD && !isAtTop) {
                     triggerScatterAnimation();
                 }
 
                 pullDistance = 0;
                 isAtBottom = false;
+                isAtTop = false;
             }, { passive: true });
         }
 

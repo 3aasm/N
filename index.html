@@ -593,8 +593,8 @@
             position: absolute;
             opacity: 0;
             font-size: 1.5rem;
-            color: #10b981;
-            filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.5));
+            color: #9ca3af; /* Gray color (text-gray-400) */
+            filter: drop-shadow(0 0 8px rgba(156, 163, 175, 0.3));
             pointer-events: none;
         }
 
@@ -1552,10 +1552,15 @@
                     pullDistance = diff;
                     if (pullDistance > PULL_THRESHOLD * 1.5) pullDistance = PULL_THRESHOLD * 1.5;
                     
-                    // Optional: Visual feedback (slight lift of the container)
+                    // Only lift the list container, NOT the whole view (to keep header static)
                     const activeView = document.querySelector('.view-section:not(.hidden)');
                     if (activeView) {
-                        activeView.style.transform = `translateY(${-pullDistance * 0.2}px)`;
+                        // Find the list container within the active view
+                        const list = activeView.querySelector('div.flex.flex-col.gap-4') || activeView.querySelector('.space-y-6');
+                        if (list) {
+                            list.style.transform = `translateY(${-pullDistance * 0.2}px)`;
+                            list.style.transition = 'none';
+                        }
                     }
                 }
             }, { passive: false });
@@ -1566,7 +1571,13 @@
                 }
                 
                 const activeView = document.querySelector('.view-section:not(.hidden)');
-                if (activeView) activeView.style.transform = '';
+                if (activeView) {
+                    const list = activeView.querySelector('div.flex.flex-col.gap-4') || activeView.querySelector('.space-y-6');
+                    if (list) {
+                        list.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+                        list.style.transform = '';
+                    }
+                }
                 
                 pullDistance = 0;
                 isAtBottom = false;
@@ -1595,9 +1606,9 @@
                 
                 icon.style.setProperty('--tx', `${tx}px`);
                 icon.style.setProperty('--ty', `${ty}px`);
-                icon.style.setProperty('--rot', `${rot} Broadway`);
+                icon.style.setProperty('--rot', `${rot}deg`);
                 icon.style.left = '50%';
-                icon.style.bottom = '20px';
+                icon.style.bottom = '80px'; // Higher up to stay above the bottom nav area start
                 icon.style.animationDelay = `${Math.random() * 0.2}s`;
                 
                 container.appendChild(icon);

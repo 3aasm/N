@@ -593,7 +593,8 @@
             position: absolute;
             opacity: 0;
             font-size: 1.5rem;
-            color: #9ca3af; /* Gray color (text-gray-400) */
+            color: #9ca3af;
+            /* Gray color (text-gray-400) */
             filter: drop-shadow(0 0 8px rgba(156, 163, 175, 0.3));
             pointer-events: none;
         }
@@ -603,9 +604,11 @@
                 transform: translate(0, 0) scale(0) rotate(0deg);
                 opacity: 0;
             }
+
             20% {
                 opacity: 1;
             }
+
             100% {
                 transform: translate(var(--tx), var(--ty)) scale(1.2) rotate(var(--rot));
                 opacity: 0;
@@ -978,7 +981,7 @@
                 </button>
             </div>
         </nav>
-        
+
         <!-- Scatter Animation Container -->
         <div id="global-scatter-container" class="scatter-container"></div>
     </main>
@@ -1077,6 +1080,9 @@
 
             <div class="text-center text-gray-400 text-sm leading-relaxed px-4">
                 تطبيق بسيط ومنظم لمساعدتك على تدوين ملاحضاتك وادارة مهامك اليومية بكفاءة عالية.
+                <div class="mt-4 pt-4 border-t border-white/5 text-[10px] opacity-60">
+                    آخر تحديث: <span class="font-mono">2026-03-14</span> | <span class="font-mono">04:52 مساءً</span>
+                </div>
             </div>
         </div>
     </div>
@@ -1470,14 +1476,15 @@
                         class="fa-solid fa-ghost"></i></div>
                 <div class="selectable-icon" data-icon="fa-rocket" onclick="selectNoteIcon('fa-rocket')"><i
                         class="fa-solid fa-rocket"></i></div>
-                
+
                 <!-- Keyboard Icon Input -->
                 <div class="col-span-3 mt-4">
                     <p class="text-xs text-gray-500 mb-2 text-right px-2">أو أضف أيقونة من الكيبورد (إيموجي أو نص)</p>
                     <div class="flex gap-2">
-                        <button onclick="const val = document.getElementById('custom-kb-icon').value; if(val) selectNoteIcon(val)" 
+                        <button
+                            onclick="const val = document.getElementById('custom-kb-icon').value; if(val) selectNoteIcon(val)"
                             class="bg-emerald-500 hover:bg-emerald-400 text-gray-900 font-bold px-4 py-2 rounded-xl transition-all active:scale-95 text-xs">تعيين</button>
-                        <input type="text" id="custom-kb-icon" placeholder="🚀" 
+                        <input type="text" id="custom-kb-icon" placeholder="🚀"
                             class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white text-center focus:outline-none focus:border-emerald-500/50 transition-all">
                     </div>
                 </div>
@@ -1537,7 +1544,16 @@
             document.addEventListener('touchstart', e => {
                 const target = e.target.closest('.view-section');
                 if (!target) return;
-                
+
+                // Stop any current spring-back immediately on new touch
+                const activeView = document.querySelector('.view-section:not(.hidden)');
+                if (activeView) {
+                    const list = activeView.querySelector('div.flex.flex-col.gap-4') || activeView.querySelector('.space-y-6');
+                    if (list) {
+                        list.style.transition = 'none';
+                    }
+                }
+
                 // Check if target is scrolled to bottom
                 isAtBottom = (target.scrollHeight - target.scrollTop <= target.clientHeight + 1);
                 lastY = e.touches[0].pageY;
@@ -1546,15 +1562,15 @@
 
             document.addEventListener('touchmove', e => {
                 if (!isAtBottom) return;
-                
+
                 const currentY = e.touches[0].pageY;
                 const diff = lastY - currentY; // Positive means pulling UP
-                
+
                 if (diff > 0) {
                     pullDistance = diff;
                     // Logarithmic damping for elasticity
                     const damped = Math.log10(1 + pullDistance / 100) * 120;
-                    
+
                     const activeView = document.querySelector('.view-section:not(.hidden)');
                     if (activeView) {
                         const list = activeView.querySelector('div.flex.flex-col.gap-4') || activeView.querySelector('.space-y-6');
@@ -1572,19 +1588,15 @@
                     const list = activeView.querySelector('div.flex.flex-col.gap-4') || activeView.querySelector('.space-y-6');
                     if (list) {
                         // Spring-back animation
-                        list.style.transition = 'transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                        list.style.transition = 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
                         list.style.transform = '';
-                        // Remove transition after it finishes to avoid conflicts with next drag
-                        setTimeout(() => {
-                            if (pullDistance === 0) list.style.transition = 'none';
-                        }, 600);
                     }
                 }
 
                 if (isAtBottom && pullDistance > PULL_THRESHOLD && !isScatterAnimating) {
                     triggerScatterAnimation();
                 }
-                
+
                 pullDistance = 0;
                 isAtBottom = false;
             }, { passive: true });
@@ -1599,39 +1611,44 @@
                 isScatterAnimating = false;
                 return;
             }
-            
+
             container.innerHTML = '';
             const icons = ['fa-check-double', 'fa-note-sticky', 'fa-star', 'fa-fire', 'fa-bolt', 'fa-heart'];
             const count = 15;
-            
+
             for (let i = 0; i < count; i++) {
                 const icon = document.createElement('i');
                 const iconClass = icons[Math.floor(Math.random() * icons.length)];
                 icon.className = `fa-solid ${iconClass} scatter-icon animate-scatter`;
-                
+
                 // Randomize trajectory
                 const angle = (Math.PI + (Math.random() * Math.PI)); // 180 to 360 degrees (upwards)
                 const distance = 100 + Math.random() * 200;
                 const tx = Math.cos(angle) * distance;
                 const ty = Math.sin(angle) * distance;
                 const rot = (Math.random() - 0.5) * 360;
-                
+
                 icon.style.setProperty('--tx', `${tx}px`);
                 icon.style.setProperty('--ty', `${ty}px`);
                 icon.style.setProperty('--rot', `${rot}deg`);
                 icon.style.left = '50%';
-                icon.style.bottom = '80px'; 
+                icon.style.bottom = '80px';
                 icon.style.animationDelay = `${Math.random() * 0.2}s`;
-                
+
                 container.appendChild(icon);
             }
-            
-            // Clean up after animation
+
+            // Cooldown for burst, but allow a bit overlapping if needed?
+            // Actually 800ms cooldown is better for stability
             setTimeout(() => {
-                container.innerHTML = '';
                 isScatterAnimating = false;
-            }, 1200);
-            
+            }, 800);
+
+            // Longer cleanup to ensure icons finish their move
+            setTimeout(() => {
+                if (!isScatterAnimating) container.innerHTML = '';
+            }, 1500);
+
             if (window.navigator.vibrate) window.navigator.vibrate(10);
         }
 

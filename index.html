@@ -1081,7 +1081,7 @@
             <div class="text-center text-gray-400 text-sm leading-relaxed px-4">
                 تطبيق بسيط ومنظم لمساعدتك على تدوين ملاحضاتك وادارة مهامك اليومية بكفاءة عالية.
                 <div class="mt-4 pt-4 border-t border-white/5 text-[10px] opacity-60">
-                    آخر تحديث: <span class="font-mono">2026-03-14</span> | <span class="font-mono">10:07 مساءً</span>
+                    آخر تحديث: <span class="font-mono">2026-03-14</span> | <span class="font-mono">10:08 مساءً</span>
                 </div>
             </div>
         </div>
@@ -1537,6 +1537,7 @@
             let startY = 0;
             let pullDistance = 0;
             let activePullType = null;
+            let activeList = null;
 
             const PULL_THRESHOLD = 80;
 
@@ -1547,58 +1548,55 @@
                 startY = e.touches[0].pageY;
                 pullDistance = 0;
                 activePullType = null;
+                
+                // Clear any existing will-change to be safe
+                if (activeList) activeList.style.willChange = '';
+                
+                const activeView = document.querySelector('.view-section:not(.hidden)');
+                if (activeView) {
+                    activeList = activeView.querySelector('div.flex.flex-col.gap-4') || activeView.querySelector('.space-y-6');
+                    if (activeList) activeList.style.willChange = 'transform';
+                }
             }, { passive: true });
 
             document.addEventListener('touchmove', e => {
                 const scrollContainer = document.getElementById('main-scroll-container');
-                if (!scrollContainer) return;
+                if (!scrollContainer || !activeList) return;
 
                 const currentY = e.touches[0].pageY;
                 const diff = startY - currentY; // Positive = pulling UP, Negative = pulling DOWN
 
-                // Dynamically check boundaries during movement
-                const isAtTop = (scrollContainer.scrollTop <= 1);
-                const isAtBottom = (scrollContainer.scrollHeight - scrollContainer.scrollTop <= scrollContainer.clientHeight + 1);
+                // Seamless boundary detection
+                const isAtTop = (scrollContainer.scrollTop <= 0.5);
+                const isAtBottom = (scrollContainer.scrollHeight - scrollContainer.scrollTop <= scrollContainer.clientHeight + 0.5);
 
-                const activeView = document.querySelector('.view-section:not(.hidden)');
-                if (!activeView) return;
-                const list = activeView.querySelector('div.flex.flex-col.gap-4') || activeView.querySelector('.space-y-6');
-                if (!list) return;
+                // Smoother damping formula: Log-based with lower multiplier for initial pull
+                const getDamped = (dist) => Math.log10(1 + dist / 120) * 140;
 
-                // Handle pull-down at top OR pull-up at bottom OR reverse pulls
                 if (isAtTop && diff < 0) {
-                    // Pulling DOWN at TOP (Stretch Down)
                     activePullType = 'top-down';
                     pullDistance = Math.abs(diff);
-                    const damped = Math.log10(1 + pullDistance / 100) * 120;
-                    list.style.transform = `translateY(${damped}px)`;
-                    list.style.transition = 'none';
+                    activeList.style.transform = `translate3d(0, ${getDamped(pullDistance)}px, 0)`;
+                    activeList.style.transition = 'none';
                 } else if (isAtTop && diff > 0 && scrollContainer.scrollHeight <= scrollContainer.clientHeight + 2) {
-                    // Special case: Pulling UP at TOP when content is shorter than container
                     activePullType = 'top-up';
                     pullDistance = diff;
-                    const damped = Math.log10(1 + pullDistance / 100) * 120;
-                    list.style.transform = `translateY(${-damped}px)`;
-                    list.style.transition = 'none';
+                    activeList.style.transform = `translate3d(0, ${-getDamped(pullDistance)}px, 0)`;
+                    activeList.style.transition = 'none';
                 } else if (isAtBottom && diff > 0) {
-                    // Pulling UP at BOTTOM (Stretch Up)
                     activePullType = 'bottom-up';
                     pullDistance = diff;
-                    const damped = Math.log10(1 + pullDistance / 100) * 120;
-                    list.style.transform = `translateY(${-damped}px)`;
-                    list.style.transition = 'none';
+                    activeList.style.transform = `translate3d(0, ${-getDamped(pullDistance)}px, 0)`;
+                    activeList.style.transition = 'none';
                 } else if (isAtBottom && diff < 0) {
-                    // Pulling DOWN at BOTTOM (Reverse Stretch - Stretch Down)
                     activePullType = 'bottom-down';
                     pullDistance = Math.abs(diff);
-                    const damped = Math.log10(1 + pullDistance / 100) * 120;
-                    list.style.transform = `translateY(${damped}px)`;
-                    list.style.transition = 'none';
+                    activeList.style.transform = `translate3d(0, ${getDamped(pullDistance)}px, 0)`;
+                    activeList.style.transition = 'none';
                 } else {
-                    // Reset if we move away from boundary
                     if (pullDistance !== 0) {
-                        list.style.transition = 'transform 0.4s ease-out';
-                        list.style.transform = '';
+                        activeList.style.transition = 'transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)';
+                        activeList.style.transform = '';
                         pullDistance = 0;
                         activePullType = null;
                     }
@@ -1606,13 +1604,12 @@
             }, { passive: false });
 
             document.addEventListener('touchend', () => {
-                const activeView = document.querySelector('.view-section:not(.hidden)');
-                if (activeView) {
-                    const list = activeView.querySelector('div.flex.flex-col.gap-4') || activeView.querySelector('.space-y-6');
-                    if (list) {
-                        list.style.transition = 'transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
-                        list.style.transform = '';
-                    }
+                if (activeList) {
+                    activeList.style.transition = 'transform 0.6s cubic-bezier(0.23, 1, 0.32, 1)';
+                    activeList.style.transform = '';
+                    // Reset will-change after animation
+                    const currentList = activeList;
+                    setTimeout(() => { if (currentList) currentList.style.willChange = ''; }, 600);
                 }
 
                 if (activePullType === 'bottom-up' && pullDistance > PULL_THRESHOLD) {
@@ -1621,6 +1618,7 @@
 
                 pullDistance = 0;
                 activePullType = null;
+                activeList = null;
             }, { passive: true });
         }
 

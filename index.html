@@ -1550,15 +1550,14 @@
                 
                 if (diff > 0) {
                     pullDistance = diff;
-                    if (pullDistance > PULL_THRESHOLD * 1.5) pullDistance = PULL_THRESHOLD * 1.5;
+                    // Logarithmic damping for elasticity
+                    const damped = Math.log10(1 + pullDistance / 100) * 120;
                     
-                    // Only lift the list container, NOT the whole view (to keep header static)
                     const activeView = document.querySelector('.view-section:not(.hidden)');
                     if (activeView) {
-                        // Find the list container within the active view
                         const list = activeView.querySelector('div.flex.flex-col.gap-4') || activeView.querySelector('.space-y-6');
                         if (list) {
-                            list.style.transform = `translateY(${-pullDistance * 0.2}px)`;
+                            list.style.transform = `translateY(${-damped}px)`;
                             list.style.transition = 'none';
                         }
                     }
@@ -1566,17 +1565,18 @@
             }, { passive: false });
 
             document.addEventListener('touchend', () => {
-                if (isAtBottom && pullDistance > PULL_THRESHOLD) {
-                    triggerScatterAnimation();
-                }
-                
                 const activeView = document.querySelector('.view-section:not(.hidden)');
                 if (activeView) {
                     const list = activeView.querySelector('div.flex.flex-col.gap-4') || activeView.querySelector('.space-y-6');
                     if (list) {
-                        list.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+                        // Spring-back animation
+                        list.style.transition = 'transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
                         list.style.transform = '';
                     }
+                }
+
+                if (isAtBottom && pullDistance > PULL_THRESHOLD) {
+                    triggerScatterAnimation();
                 }
                 
                 pullDistance = 0;

@@ -1081,7 +1081,7 @@
             <div class="text-center text-gray-400 text-sm leading-relaxed px-4">
                 تطبيق بسيط ومنظم لمساعدتك على تدوين ملاحضاتك وادارة مهامك اليومية بكفاءة عالية.
                 <div class="mt-4 pt-4 border-t border-white/5 text-[10px] opacity-60">
-                    آخر تحديث: <span class="font-mono">2026-03-14</span> | <span class="font-mono">12:00 مساءً</span>
+                    آخر تحديث: <span class="font-mono">2026-03-14</span> | <span class="font-mono">12:04 مساءً</span>
                 </div>
             </div>
         </div>
@@ -1535,125 +1535,93 @@
         // -------------------------
         function initBottomPullAnimation() {
             let startY = 0;
-            let currentPull = 0;
-            let gestureState = 'IDLE'; // IDLE, SCROLLING, STRETCHING
-            let activeList = null;
-            let activeType = null; // 'top', 'bottom'
+            let pullDistance = 0;
+            let activePullType = null;
 
             const PULL_THRESHOLD = 80;
-            const DAMPING_FACTOR = 160;
-
-            const scrollContainer = document.getElementById('main-scroll-container');
-            if (!scrollContainer) return;
-
-            // Helper to get active list
-            function getActiveList() {
-                const activeView = document.querySelector('.view-section:not(.hidden)');
-                if (!activeView) return null;
-                return activeView.querySelector('div.flex.flex-col.gap-4') || activeView.querySelector('.space-y-6');
-            }
-
-            // iOS Rubber-Band Formula
-            function applyRubberBand(distance, dimension) {
-                return (1.0 - (1.0 / ((distance * CONSTANT / dimension) + 1.0))) * dimension;
-            }
 
             document.addEventListener('touchstart', e => {
-                startY = e.touches[0].pageY;
-                gestureState = 'IDLE';
-                activeType = null;
-                currentPull = 0;
+                const scrollContainer = document.getElementById('main-scroll-container');
+                if (!scrollContainer) return;
 
-                activeList = getActiveList();
-                if (activeList) {
-                    activeList.style.willChange = 'transform';
-                }
+                startY = e.touches[0].pageY;
+                pullDistance = 0;
+                activePullType = null;
             }, { passive: true });
 
             document.addEventListener('touchmove', e => {
-                if (!activeList) {
-                    activeList = getActiveList();
-                    if (!activeList) return;
-                }
+                const scrollContainer = document.getElementById('main-scroll-container');
+                if (!scrollContainer) return;
 
                 const currentY = e.touches[0].pageY;
-                const diff = startY - currentY; // Positive = UP, Negative = DOWN
+                const diff = startY - currentY; // Positive = pulling UP, Negative = pulling DOWN
 
-                // Robust boundary detection
-                const isAtTop = scrollContainer.scrollTop <= 0;
-                const isAtBottom = (scrollContainer.scrollHeight - scrollContainer.scrollTop) <= (scrollContainer.clientHeight + 1);
+                // Dynamically check boundaries during movement
+                const isAtTop = (scrollContainer.scrollTop <= 1);
+                const isAtBottom = (scrollContainer.scrollHeight - scrollContainer.scrollTop <= scrollContainer.clientHeight + 1);
 
-                // State Transition Logic
-                if (gestureState === 'IDLE') {
-                    if ((isAtTop && diff < 0) || (isAtBottom && diff > 0)) {
-                        gestureState = 'STRETCHING';
-                    } else {
-                        gestureState = 'SCROLLING';
+                const activeView = document.querySelector('.view-section:not(.hidden)');
+                if (!activeView) return;
+                const list = activeView.querySelector('div.flex.flex-col.gap-4') || activeView.querySelector('.space-y-6');
+                if (!list) return;
+
+                // Handle pull-down at top OR pull-up at bottom OR reverse pulls
+                if (isAtTop && diff < 0) {
+                    // Pulling DOWN at TOP (Stretch Down)
+                    activePullType = 'top-down';
+                    pullDistance = Math.abs(diff);
+                    const damped = Math.log10(1 + pullDistance / 100) * 120;
+                    list.style.transform = `translateY(${damped}px)`;
+                    list.style.transition = 'none';
+                } else if (isAtTop && diff > 0 && scrollContainer.scrollHeight <= scrollContainer.clientHeight + 2) {
+                    // Special case: Pulling UP at TOP when content is shorter than container
+                    activePullType = 'top-up';
+                    pullDistance = diff;
+                    const damped = Math.log10(1 + pullDistance / 100) * 120;
+                    list.style.transform = `translateY(${-damped}px)`;
+                    list.style.transition = 'none';
+                } else if (isAtBottom && diff > 0) {
+                    // Pulling UP at BOTTOM (Stretch Up)
+                    activePullType = 'bottom-up';
+                    pullDistance = diff;
+                    const damped = Math.log10(1 + pullDistance / 100) * 120;
+                    list.style.transform = `translateY(${-damped}px)`;
+                    list.style.transition = 'none';
+                } else if (isAtBottom && diff < 0) {
+                    // Pulling DOWN at BOTTOM (Reverse Stretch - Stretch Down)
+                    activePullType = 'bottom-down';
+                    pullDistance = Math.abs(diff);
+                    const damped = Math.log10(1 + pullDistance / 100) * 120;
+                    list.style.transform = `translateY(${damped}px)`;
+                    list.style.transition = 'none';
+                } else {
+                    // Reset if we move away from boundary
+                    if (pullDistance !== 0) {
+                        list.style.transition = 'transform 0.4s ease-out';
+                        list.style.transform = '';
+                        pullDistance = 0;
+                        activePullType = null;
                     }
-                }
-
-                if (gestureState === 'STRETCHING') {
-                    if (e.cancelable) e.preventDefault();
-
-                    const absDiff = Math.abs(diff);
-                    // Use iOS Damping (viewHeight approx 600-800)
-                    const viewHeight = scrollContainer.clientHeight || 600;
-                    currentPull = applyRubberBand(absDiff, viewHeight);
-                    
-                    if (isAtTop && diff < 0) {
-                        activeType = 'top';
-                        activeList.style.transform = `translate3d(0, ${currentPull}px, 0)`;
-                    } else if (isAtBottom && diff > 0) {
-                        activeType = 'bottom';
-                        activeList.style.transform = `translate3d(0, ${-currentPull}px, 0)`;
-                    } else {
-                        const canScroll = scrollContainer.scrollHeight > scrollContainer.clientHeight + 2;
-                        if (!canScroll) {
-                            const pullDirectional = diff > 0 ? -currentPull : currentPull;
-                            activeList.style.transform = `translate3d(0, ${pullDirectional}px, 0)`;
-                        } else {
-                            gestureState = 'SCROLLING';
-                            activeList.style.transform = '';
-                        }
-                    }
-                    activeList.style.transition = 'none';
                 }
             }, { passive: false });
 
-            document.addEventListener('touchend', e => {
-                if (activeList) {
-                    // iOS Characteristic Spring Easing
-                    activeList.style.transition = 'transform 0.5s cubic-bezier(0.19, 1, 0.22, 1)';
-                    activeList.style.transform = '';
-                    
-                    const target = activeList;
-                    setTimeout(() => { 
-                        if (target) target.style.willChange = ''; 
-                    }, 500);
-                }
-
-                // Check for Scatter Trigger (Bottom pull only)
-                if (e.changedTouches && e.changedTouches.length > 0) {
-                    const currentY = e.changedTouches[0].pageY;
-                    const finalDiff = startY - currentY;
-                    if (activeType === 'bottom' && finalDiff > PULL_THRESHOLD) {
-                        triggerScatterAnimation();
+            document.addEventListener('touchend', () => {
+                const activeView = document.querySelector('.view-section:not(.hidden)');
+                if (activeView) {
+                    const list = activeView.querySelector('div.flex.flex-col.gap-4') || activeView.querySelector('.space-y-6');
+                    if (list) {
+                        list.style.transition = 'transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                        list.style.transform = '';
                     }
                 }
 
-                gestureState = 'IDLE';
-                activeType = null;
-                activeList = null;
-            }, { passive: true });
-
-            document.addEventListener('touchcancel', () => {
-                if (activeList) {
-                    activeList.style.transform = '';
-                    activeList.style.willChange = '';
+                if (activePullType === 'bottom-up' && pullDistance > PULL_THRESHOLD) {
+                    triggerScatterAnimation();
                 }
-                gestureState = 'IDLE';
-                activeList = null;
-            });
+
+                pullDistance = 0;
+                activePullType = null;
+            }, { passive: true });
         }
 
         function triggerScatterAnimation() {

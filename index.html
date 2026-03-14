@@ -1081,7 +1081,7 @@
             <div class="text-center text-gray-400 text-sm leading-relaxed px-4">
                 تطبيق بسيط ومنظم لمساعدتك على تدوين ملاحضاتك وادارة مهامك اليومية بكفاءة عالية.
                 <div class="mt-4 pt-4 border-t border-white/5 text-[10px] opacity-60">
-                    آخر تحديث: <span class="font-mono">2026-03-14</span> | <span class="font-mono">10:05 مساءً</span>
+                    آخر تحديث: <span class="font-mono">2026-03-14</span> | <span class="font-mono">10:07 مساءً</span>
                 </div>
             </div>
         </div>
@@ -1534,52 +1534,74 @@
         // Bottom Pull Animation Logic
         // -------------------------
         function initBottomPullAnimation() {
-            let lastY = 0;
+            let startY = 0;
             let pullDistance = 0;
-            const PULL_THRESHOLD = 80;
-            let isAtBottom = false;
-            let isAtTop = false;
             let activePullType = null;
+
+            const PULL_THRESHOLD = 80;
 
             document.addEventListener('touchstart', e => {
                 const scrollContainer = document.getElementById('main-scroll-container');
                 if (!scrollContainer) return;
 
-                const viewSection = e.target.closest('.view-section');
-                if (!viewSection) return;
-
-                // Detect scroll state on the container
-                isAtBottom = (scrollContainer.scrollHeight - scrollContainer.scrollTop <= scrollContainer.clientHeight + 2);
-                isAtTop = (scrollContainer.scrollTop <= 2);
-                
-                lastY = e.touches[0].pageY;
+                startY = e.touches[0].pageY;
                 pullDistance = 0;
                 activePullType = null;
             }, { passive: true });
 
             document.addEventListener('touchmove', e => {
-                if (!isAtBottom && !isAtTop) return;
+                const scrollContainer = document.getElementById('main-scroll-container');
+                if (!scrollContainer) return;
 
                 const currentY = e.touches[0].pageY;
-                const diff = lastY - currentY; // Positive = pulling UP, Negative = pulling DOWN
+                const diff = startY - currentY; // Positive = pulling UP, Negative = pulling DOWN
+
+                // Dynamically check boundaries during movement
+                const isAtTop = (scrollContainer.scrollTop <= 1);
+                const isAtBottom = (scrollContainer.scrollHeight - scrollContainer.scrollTop <= scrollContainer.clientHeight + 1);
 
                 const activeView = document.querySelector('.view-section:not(.hidden)');
                 if (!activeView) return;
                 const list = activeView.querySelector('div.flex.flex-col.gap-4') || activeView.querySelector('.space-y-6');
                 if (!list) return;
 
-                if (diff > 0 && isAtBottom) {
-                    activePullType = 'bottom';
-                    pullDistance = diff;
-                    const damped = Math.log10(1 + pullDistance / 100) * 120;
-                    list.style.transform = `translateY(${-damped}px)`;
-                    list.style.transition = 'none';
-                } else if (diff < 0 && isAtTop) {
-                    activePullType = 'top';
+                // Handle pull-down at top OR pull-up at bottom OR reverse pulls
+                if (isAtTop && diff < 0) {
+                    // Pulling DOWN at TOP (Stretch Down)
+                    activePullType = 'top-down';
                     pullDistance = Math.abs(diff);
                     const damped = Math.log10(1 + pullDistance / 100) * 120;
                     list.style.transform = `translateY(${damped}px)`;
                     list.style.transition = 'none';
+                } else if (isAtTop && diff > 0 && scrollContainer.scrollHeight <= scrollContainer.clientHeight + 2) {
+                    // Special case: Pulling UP at TOP when content is shorter than container
+                    activePullType = 'top-up';
+                    pullDistance = diff;
+                    const damped = Math.log10(1 + pullDistance / 100) * 120;
+                    list.style.transform = `translateY(${-damped}px)`;
+                    list.style.transition = 'none';
+                } else if (isAtBottom && diff > 0) {
+                    // Pulling UP at BOTTOM (Stretch Up)
+                    activePullType = 'bottom-up';
+                    pullDistance = diff;
+                    const damped = Math.log10(1 + pullDistance / 100) * 120;
+                    list.style.transform = `translateY(${-damped}px)`;
+                    list.style.transition = 'none';
+                } else if (isAtBottom && diff < 0) {
+                    // Pulling DOWN at BOTTOM (Reverse Stretch - Stretch Down)
+                    activePullType = 'bottom-down';
+                    pullDistance = Math.abs(diff);
+                    const damped = Math.log10(1 + pullDistance / 100) * 120;
+                    list.style.transform = `translateY(${damped}px)`;
+                    list.style.transition = 'none';
+                } else {
+                    // Reset if we move away from boundary
+                    if (pullDistance !== 0) {
+                        list.style.transition = 'transform 0.4s ease-out';
+                        list.style.transform = '';
+                        pullDistance = 0;
+                        activePullType = null;
+                    }
                 }
             }, { passive: false });
 
@@ -1593,13 +1615,11 @@
                     }
                 }
 
-                if (activePullType === 'bottom' && pullDistance > PULL_THRESHOLD) {
+                if (activePullType === 'bottom-up' && pullDistance > PULL_THRESHOLD) {
                     triggerScatterAnimation();
                 }
 
                 pullDistance = 0;
-                isAtBottom = false;
-                isAtTop = false;
                 activePullType = null;
             }, { passive: true });
         }

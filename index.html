@@ -1080,9 +1080,6 @@
 
             <div class="text-center text-gray-400 text-sm leading-relaxed px-4">
                 تطبيق بسيط ومنظم لمساعدتك على تدوين ملاحضاتك وادارة مهامك اليومية بكفاءة عالية.
-                <div class="mt-4 pt-4 border-t border-white/5 text-[10px] opacity-60">
-                    آخر تحديث: <span class="font-mono">2026-03-14</span> | <span class="font-mono">04:52 مساءً</span>
-                </div>
             </div>
         </div>
     </div>
@@ -1538,21 +1535,10 @@
             let pullDistance = 0;
             const PULL_THRESHOLD = 80;
             let isAtBottom = false;
-            let isScatterAnimating = false; // Cooldown flag
-
 
             document.addEventListener('touchstart', e => {
                 const target = e.target.closest('.view-section');
                 if (!target) return;
-
-                // Stop any current spring-back immediately on new touch
-                const activeView = document.querySelector('.view-section:not(.hidden)');
-                if (activeView) {
-                    const list = activeView.querySelector('div.flex.flex-col.gap-4') || activeView.querySelector('.space-y-6');
-                    if (list) {
-                        list.style.transition = 'none';
-                    }
-                }
 
                 // Check if target is scrolled to bottom
                 isAtBottom = (target.scrollHeight - target.scrollTop <= target.clientHeight + 1);
@@ -1588,12 +1574,12 @@
                     const list = activeView.querySelector('div.flex.flex-col.gap-4') || activeView.querySelector('.space-y-6');
                     if (list) {
                         // Spring-back animation
-                        list.style.transition = 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                        list.style.transition = 'transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
                         list.style.transform = '';
                     }
                 }
 
-                if (isAtBottom && pullDistance > PULL_THRESHOLD && !isScatterAnimating) {
+                if (isAtBottom && pullDistance > PULL_THRESHOLD) {
                     triggerScatterAnimation();
                 }
 
@@ -1603,14 +1589,8 @@
         }
 
         function triggerScatterAnimation() {
-            if (isScatterAnimating) return;
-            isScatterAnimating = true;
-
             const container = document.getElementById('global-scatter-container');
-            if (!container) {
-                isScatterAnimating = false;
-                return;
-            }
+            if (!container) return;
 
             container.innerHTML = '';
             const icons = ['fa-check-double', 'fa-note-sticky', 'fa-star', 'fa-fire', 'fa-bolt', 'fa-heart'];
@@ -1632,23 +1612,18 @@
                 icon.style.setProperty('--ty', `${ty}px`);
                 icon.style.setProperty('--rot', `${rot}deg`);
                 icon.style.left = '50%';
-                icon.style.bottom = '80px';
+                icon.style.bottom = '80px'; // Higher up to stay above the bottom nav area start
                 icon.style.animationDelay = `${Math.random() * 0.2}s`;
 
                 container.appendChild(icon);
             }
 
-            // Cooldown for burst, but allow a bit overlapping if needed?
-            // Actually 800ms cooldown is better for stability
+            // Clean up after animation
             setTimeout(() => {
-                isScatterAnimating = false;
-            }, 800);
+                container.innerHTML = '';
+            }, 1200);
 
-            // Longer cleanup to ensure icons finish their move
-            setTimeout(() => {
-                if (!isScatterAnimating) container.innerHTML = '';
-            }, 1500);
-
+            // Haptic/Sound feedback if possible
             if (window.navigator.vibrate) window.navigator.vibrate(10);
         }
 

@@ -618,6 +618,40 @@
         .animate-scatter {
             animation: scatter-out 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
+
+        /* Intermediate Archive State */
+        .waiting-archive-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(156, 163, 175, 0.1);
+            backdrop-filter: blur(2px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            border-radius: inherit;
+            animation: waiting-pulse 2s infinite ease-in-out;
+            border: 1px solid rgba(156, 163, 175, 0.3);
+        }
+
+        @keyframes waiting-pulse {
+            0%, 100% { background: rgba(156, 163, 175, 0.05); border-color: rgba(156, 163, 175, 0.2); }
+            50% { background: rgba(156, 163, 175, 0.15); border-color: rgba(156, 163, 175, 0.4); }
+        }
+
+        .waiting-archive-text {
+            color: #9ca3af;
+            font-weight: 700;
+            font-size: 0.8rem;
+            text-shadow: 0 0 8px rgba(156, 163, 175, 0.4);
+            animation: text-float 2s infinite ease-in-out;
+            pointer-events: none;
+        }
+
+        @keyframes text-float {
+            0%, 100% { transform: translateY(0); opacity: 0.7; }
+            50% { transform: translateY(-2px); opacity: 0.9; }
+        }
     </style>
 </head>
 
@@ -1081,7 +1115,7 @@
             <div class="text-center text-gray-400 text-sm leading-relaxed px-4">
                 تطبيق بسيط ومنظم لمساعدتك على تدوين ملاحضاتك وادارة مهامك اليومية بكفاءة عالية.
                 <div class="mt-4 pt-4 border-t border-white/5 text-[10px] opacity-60">
-                    آخر تحديث: <span class="font-mono">2026-03-14</span> | <span class="font-mono">12:04 مساءً</span>
+                    آخر تحديث: <span class="font-mono">2026-03-14</span> | <span class="font-mono">10:07 مساءً</span>
                 </div>
             </div>
         </div>
@@ -1973,18 +2007,22 @@
                     task.completed = false;
                     task.currentRepetition = 0;
                     task.archivedAt = null;
+                    task.waitingForArchive = false;
+                } else if (task.waitingForArchive) {
+                    // Second click: actually archive it
+                    task.completed = true;
+                    task.archivedAt = Date.now();
+                    task.waitingForArchive = false;
+                    if (typeof fireConfetti === 'function') fireConfetti();
                 } else {
                     // Increment repetition
                     task.currentRepetition = (task.currentRepetition || 0) + 1;
 
                     const max = task.maxRepetitions || 1;
                     if (task.currentRepetition >= max) {
-                        task.completed = true;
                         task.currentRepetition = max;
-                        task.archivedAt = Date.now();
+                        task.waitingForArchive = true; // First state: show animation
 
-                        // احتفال الإنجاز
-                        if (typeof fireConfetti === 'function') fireConfetti();
                         if (event) {
                             const btn = event.currentTarget.tagName === 'BUTTON' ? event.currentTarget : event.currentTarget.querySelector('.checkbox-glass');
                             if (btn) {
@@ -2237,15 +2275,23 @@
             if (event) event.stopPropagation();
             const note = notes.find(n => n.id === id);
             if (note && !note.archived) {
-                note.archived = true;
-                note.archivedAt = Date.now();
-                saveNotesData();
-                if (typeof fireConfetti === 'function') fireConfetti();
-                if (event) {
-                    const btn = event.currentTarget.tagName === 'BUTTON' ? event.currentTarget : event.currentTarget.querySelector('.checkbox-glass');
-                    if (btn) {
-                        btn.classList.add('checkbox-pulse');
-                        setTimeout(() => btn.classList.remove('checkbox-pulse'), 500);
+                if (note.waitingForArchive) {
+                    // Second click: archive
+                    note.archived = true;
+                    note.archivedAt = Date.now();
+                    note.waitingForArchive = false;
+                    saveNotesData();
+                    if (typeof fireConfetti === 'function') fireConfetti();
+                } else {
+                    // First click: intermediate state
+                    note.waitingForArchive = true;
+                    saveNotesData();
+                    if (event) {
+                        const btn = event.currentTarget.tagName === 'BUTTON' ? event.currentTarget : event.currentTarget.querySelector('.checkbox-glass');
+                        if (btn) {
+                            btn.classList.add('checkbox-pulse');
+                            setTimeout(() => btn.classList.remove('checkbox-pulse'), 500);
+                        }
                     }
                 }
             }
@@ -2407,20 +2453,39 @@
 
                 taskEl.classList.add('relative', 'overflow-hidden');
 
+                let waitingOverlay = '';
+                if (task.waitingForArchive) {
+                    waitingOverlay = `
+                        <div class="waiting-archive-overlay">
+                            <span class="waiting-archive-text">إضغط لنقلها للأرشيف</span>
+                        </div>
+                    `;
+                }
+
+                const isWaiting = task.waitingForArchive;
+
                 taskEl.innerHTML = `
+                        ${waitingOverlay}
                         ${settings.showTaskBgIconBtn ? bgIconHTML : ''}
-                        ${checkboxHTML}
+                        
+                        <div class="flex flex-col items-center justify-center shrink-0 relative z-30">
+                            <button class="checkbox-glass ${isWaiting || isCompleted ? 'border-emerald-500/50' : (curRep > 0 ? 'border-emerald-500/30' : '')} w-7 h-7 rounded-lg flex flex-col items-center justify-center transition-all duration-300 border border-white/20">
+                                <i class="fa-solid fa-check text-[10px] ${isWaiting || isCompleted ? 'text-emerald-400' : 'text-transparent'} transition-colors duration-300"></i>
+                            </button>
+                            ${iterationHTML}
+                        </div>
+
                         <div class="flex-1 transition-all duration-300 relative z-10">
-                            <h3 class="${isCompleted ? 'text-gray-500 line-through' : 'text-white'} font-medium text-base mb-1 transition-colors duration-300">${task.title}</h3>
+                            <h3 class="${isCompleted || isWaiting ? 'text-gray-500 line-through' : 'text-white'} font-medium text-base mb-1 transition-colors duration-300">${task.title}</h3>
                             <div class="flex items-center gap-2">
                                 ${priorityIcon}
                                 <div class="px-2 py-0.5 rounded-lg border border-white/10 bg-white/5 flex items-center gap-1.5 text-gray-400 text-[10px]">
-                                    <i class="fa-regular fa-clock ${isCompleted ? 'text-gray-500' : 'text-emerald-500/70'}"></i>
+                                    <i class="fa-regular fa-clock ${isCompleted || isWaiting ? 'text-gray-500' : 'text-emerald-500/70'}"></i>
                                     <span>${task.time}</span>
                                 </div>
                             </div>
                         </div>
-                        <div class="flex items-center gap-1 shrink-0">
+                        <div class="flex items-center gap-1 shrink-0 relative z-30">
                             ${!isLocalArchive ? `
                             <button onclick="editTask(${task.id}, event)" class="w-8 h-8 rounded-full flex items-center justify-center text-blue-400 opacity-60 hover:opacity-100 hover:bg-blue-500/10 transition-all" title="تعديل">
                                 <i class="fa-solid fa-pen text-sm"></i>
@@ -2512,11 +2577,32 @@
                 }
 
                 noteEl.classList.add('relative', 'overflow-hidden');
+
+                let waitingOverlay = '';
+                if (note.waitingForArchive) {
+                    waitingOverlay = `
+                        <div class="waiting-archive-overlay">
+                            <span class="waiting-archive-text">إضغط لنقلها للأرشيف</span>
+                        </div>
+                    `;
+                }
+
+                const isWaiting = note.waitingForArchive;
+
                 noteEl.innerHTML = `
+                        ${waitingOverlay}
                         ${bgIconHTML}
-                        ${checkboxHTML}
+                        
+                        <div class="flex flex-col items-center justify-center shrink-0 relative z-30">
+                            <button onclick="${isArchived ? `unarchiveNote(${note.id}, event)` : `archiveNoteDirectly(${note.id}, event)`}" 
+                                class="checkbox-glass ${isWaiting || isArchived ? 'active border-emerald-500 bg-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.3)]' : ''} w-7 h-7 rounded-lg flex flex-col items-center justify-center transition-all duration-300 border border-white/20" 
+                                title="${isArchived ? 'استعادة' : 'إنجاز'}">
+                                <i class="fa-solid fa-check text-[10px] ${isWaiting || isArchived ? 'text-emerald-400' : 'text-transparent hover:text-emerald-400/50'} transition-colors duration-300"></i>
+                            </button>
+                        </div>
+
                         <div class="flex-1 transition-all duration-300 overflow-hidden relative z-10">
-                            <h3 class="${isArchived ? 'text-gray-500 line-through' : 'text-white'} font-medium text-base mb-1 transition-colors duration-300 truncate">${note.title}</h3>
+                            <h3 class="${isArchived || isWaiting ? 'text-gray-500 line-through' : 'text-white'} font-medium text-base mb-1 transition-colors duration-300 truncate">${note.title}</h3>
                             <p class="text-gray-400 text-xs truncate">
                                 ${shortContent || 'بدون محتوى'}
                             </p>

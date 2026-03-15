@@ -21,6 +21,11 @@
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+    <!-- Firebase SDK (Compat Version for easy HTML integration) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -657,6 +662,22 @@
             pointer-events: none;
         }
 
+        .waiting-archive-overlay.exit {
+            animation: waiting-exit 0.3s cubic-bezier(0.4, 0, 1, 1) forwards;
+        }
+
+        @keyframes waiting-exit {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+        }
+
         @keyframes text-float {
 
             0%,
@@ -669,6 +690,21 @@
                 transform: translateY(-2px);
                 opacity: 0.9;
             }
+        }
+        @keyframes wave {
+            0% { transform: rotate(0deg); }
+            10% { transform: rotate(14deg); }
+            20% { transform: rotate(-8deg); }
+            30% { transform: rotate(14deg); }
+            40% { transform: rotate(-4deg); }
+            50% { transform: rotate(10deg); }
+            60% { transform: rotate(0deg); }
+            100% { transform: rotate(0deg); }
+        }
+        .animate-wave {
+            display: inline-block;
+            transform-origin: 70% 70%;
+            animation: wave 2.5s infinite;
         }
     </style>
 </head>
@@ -718,12 +754,6 @@
         <!-- Header (ONLY VISIBLE ON DASHBOARD NOW) -->
         <header id="main-header" class="p-4 pt-8 shrink-0 z-10 transition-all duration-300 flex items-center gap-3">
 
-            <!-- Profile Button (Matched with New Header Height) -->
-            <button onclick="alert('ملف التعريف الشخصي (ميزة قادمة)')"
-                class="glass-panel w-20 h-20 rounded-[2rem] flex items-center justify-center bg-white/5 border border-white/10 hover:bg-white/10 transition-all active:scale-95 shadow-sm shrink-0">
-                <i class="fa-solid fa-user text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)] text-2xl"></i>
-            </button>
-
             <!-- Refined Premium Greeting Card -->
             <div
                 class="glass-panel h-20 px-4 sm:px-8 rounded-[2rem] bg-gradient-to-br from-gray-800/40 to-transparent border-white/5 relative overflow-hidden flex-1 flex items-center">
@@ -731,9 +761,9 @@
                     <div class="space-y-0.5 sm:space-y-1 text-right shrink-0">
                         <div class="flex items-center gap-2 sm:gap-3">
                             <span class="glow-dot w-2 h-2 shrink-0"></span>
-                            <h2
+                            <h2 id="dashboard-greeting"
                                 class="text-xl sm:text-3xl font-black text-white tracking-tighter drop-shadow-lg whitespace-nowrap">
-                                أهلاً بك 👋</h2>
+                                أهلاً بك <i class="fa-solid fa-hand text-yellow-400 animate-wave text-[0.8em]"></i></h2>
                         </div>
                         <p id="dashboard-date"
                             class="text-gray-300 text-[10px] sm:text-sm font-bold arabic-date whitespace-nowrap">جاري
@@ -884,6 +914,22 @@
                         <i class="fa-solid fa-gear text-emerald-500 text-sm"></i>
                         <h2 class="text-white/80 text-lg font-bold tracking-wider">الإعدادات</h2>
                     </div>
+                </div>
+
+                <!-- Isolated Account Settings Section -->
+                <div class="glass-panel p-6 rounded-2xl bg-gray-800/40 mb-6">
+                    <button id="auth-entry-btn" onclick="openSubpage('auth')"
+                        class="flex justify-between items-center text-right w-full group active:scale-[0.98] transition-all">
+                        <div class="flex gap-3 items-center">
+                            <div
+                                class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex justify-center items-center">
+                                <i class="fa-solid fa-right-to-bracket" id="auth-btn-icon"></i>
+                            </div>
+                            <span class="text-white font-medium" id="auth-btn-text">تسجيل/انشاء حساب</span>
+                        </div>
+                        <i
+                            class="fa-solid fa-chevron-left text-gray-500 group-hover:text-emerald-400 transition-colors"></i>
+                    </button>
                 </div>
 
                 <div class="glass-panel p-6 rounded-2xl flex flex-col gap-6 bg-gray-800/40">
@@ -1278,6 +1324,168 @@
     </div>
 
 
+    <!-- SUBPAGE: Authentication (Login / Register) -->
+    <div id="subpage-auth" class="subpage px-6 pb-32 overflow-y-auto overscroll-none flex flex-col">
+        <div
+            class="sticky top-0 z-20 bg-gray-900/10 backdrop-blur-[4px] -mx-6 px-6 pt-10 pb-4 mb-8 flex items-center gap-4 shrink-0">
+            <button onclick="closeSubpage('auth')"
+                class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex justify-center items-center text-gray-400 hover:text-white active:scale-95 transition-all">
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+            <h2 id="auth-subpage-title" class="text-xl font-black text-white tracking-wide">حسابي</h2>
+        </div>
+
+        <div class="flex-1 flex flex-col items-center max-w-sm mx-auto w-full gap-8">
+            <!-- Branding Header -->
+            <div class="text-center space-y-3">
+                <div class="inline-flex p-4 rounded-[2rem] bg-emerald-500/10 border border-emerald-500/20 mb-2">
+                    <i class="fa-solid fa-shield-halved text-4xl text-emerald-400 drop-shadow-[0_0_15px_rgba(16,185,129,0.5)]"></i>
+                </div>
+                <h3 id="auth-title" class="text-2xl font-black text-white tracking-tight">مرحباً بك مجدداً <i class="fa-solid fa-hand text-yellow-400 animate-wave text-[0.8em]"></i></h3>
+                <p id="auth-subtitle" class="text-gray-400 text-sm font-medium">قم بتسجيل الدخول لمزامنة بياناتك</p>
+            </div>
+
+            <!-- Auth Switcher -->
+            <div class="w-full bg-black/20 p-1 rounded-2xl flex gap-1 border border-white/5">
+                <button id="tab-login" onclick="toggleAuthState('login')"
+                    class="flex-1 py-3 text-xs font-black rounded-xl transition-all duration-300 bg-gray-700 text-white shadow-lg">
+                    تسجيل الدخول
+                </button>
+                <button id="tab-register" onclick="toggleAuthState('register')"
+                    class="flex-1 py-3 text-xs font-black rounded-xl transition-all duration-300 text-gray-400 hover:text-white">
+                    إنشاء حساب
+                </button>
+            </div>
+
+            <!-- Forms -->
+            <div class="w-full space-y-4">
+                <div class="relative group">
+                    <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-emerald-400 transition-colors">
+                        <i class="fa-solid fa-envelope"></i>
+                    </div>
+                    <input type="email" id="auth-email" placeholder="البريد الإلكتروني" 
+                        class="w-full bg-white/[0.03] border border-white/10 rounded-2xl pr-12 pl-4 py-4 text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all text-sm font-medium">
+                </div>
+
+                <div class="relative group">
+                    <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-emerald-400 transition-colors">
+                        <i class="fa-solid fa-lock"></i>
+                    </div>
+                    <input type="password" id="auth-password" placeholder="كلمة المرور" 
+                        class="w-full bg-white/[0.03] border border-white/10 rounded-2xl pr-12 pl-4 py-4 text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all text-sm font-medium">
+                </div>
+
+                <div id="register-only-fields" class="hidden space-y-4">
+                    <div class="relative group">
+                        <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-emerald-400 transition-colors">
+                            <i class="fa-solid fa-user-tag"></i>
+                        </div>
+                        <input type="text" id="auth-username" placeholder="اسم المستخدم" 
+                            class="w-full bg-white/[0.03] border border-white/10 rounded-2xl pr-12 pl-4 py-4 text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all text-sm font-medium">
+                    </div>
+
+                    <div class="relative group">
+                        <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-emerald-400 transition-colors">
+                            <i class="fa-solid fa-check-double"></i>
+                        </div>
+                        <input type="password" id="auth-confirm-password" placeholder="تأكيد كلمة المرور" 
+                            class="w-full bg-white/[0.03] border border-white/10 rounded-2xl pr-12 pl-4 py-4 text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all text-sm font-medium">
+                    </div>
+                </div>
+
+                <button onclick="handleAuthSubmit()" id="auth-submit-btn"
+                    class="w-full bg-emerald-500 hover:bg-emerald-400 text-gray-900 font-black text-base py-4 rounded-2xl transition-all shadow-[0_15px_30px_-10px_rgba(16,185,129,0.3)] active:scale-95 shimmer-btn mt-4">
+                    تسجيل الدخول
+                </button>
+            </div>
+
+            <!-- Logged In State (Account Dashboard) -->
+            <div id="auth-logged-in-view" class="hidden w-full flex flex-col gap-6">
+                <!-- Account Tab Switcher -->
+                <div class="bg-black/20 p-1 rounded-2xl flex gap-1 border border-white/5">
+                    <button id="acc-tab-stats" onclick="switchAccountTab('stats')"
+                        class="flex-1 py-3 text-xs font-black rounded-xl transition-all duration-300 bg-gray-700 text-white shadow-lg">
+                        إحصائيات
+                    </button>
+                    <button id="acc-tab-settings" onclick="switchAccountTab('settings')"
+                        class="flex-1 py-3 text-xs font-black rounded-xl transition-all duration-300 text-gray-400 hover:text-white">
+                        إعدادات
+                    </button>
+                </div>
+
+                <!-- VIEW: Account Statistics -->
+                <div id="acc-view-stats" class="space-y-6">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="glass-panel p-4 rounded-3xl bg-emerald-500/5 border-emerald-500/10 flex flex-col items-center text-center">
+                            <span class="text-emerald-400 text-[10px] font-bold uppercase mb-1">المهام المنجزة</span>
+                            <span id="acc-stat-tasks" class="text-3xl font-black text-white">0</span>
+                        </div>
+                        <div class="glass-panel p-4 rounded-3xl bg-blue-500/5 border-blue-500/10 flex flex-col items-center text-center">
+                            <span class="text-blue-400 text-[10px] font-bold uppercase mb-1">الملاحظات</span>
+                            <span id="acc-stat-notes" class="text-3xl font-black text-white">0</span>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-6 rounded-[2rem] bg-white/[0.02] border-white/5 space-y-4">
+                        <div class="flex justify-between items-center text-xs font-bold px-1">
+                            <span class="text-gray-400">كفاءة الإنجاز</span>
+                            <span id="acc-stat-effort-percent" class="text-emerald-400">0%</span>
+                        </div>
+                        <div class="h-3 w-full bg-white/5 rounded-full overflow-hidden p-0.5">
+                            <div id="acc-stat-effort-bar" class="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                        </div>
+                        <p class="text-[10px] text-gray-500 leading-relaxed text-center px-4">هذا المؤشر يقيس مدى التزامك بإنهاء المهام التي حددتها اليوم.</p>
+                    </div>
+                </div>
+
+                <!-- VIEW: Account Settings -->
+                <div id="acc-view-settings" class="hidden space-y-5">
+                    <div class="space-y-4">
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase px-2 mb-1">تعديل الملف الشخصي</label>
+                        <div class="relative group">
+                            <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-emerald-400 transition-colors">
+                                <i class="fa-solid fa-user-pen"></i>
+                            </div>
+                            <input type="text" id="edit-username" placeholder="اسم المستخدم" 
+                                class="w-full bg-white/[0.03] border border-white/10 rounded-2xl pr-12 pl-4 py-4 text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-all text-sm font-medium">
+                        </div>
+                        <div class="relative group">
+                            <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-emerald-400 transition-colors">
+                                <i class="fa-solid fa-at"></i>
+                            </div>
+                            <input type="email" id="edit-email" placeholder="البريد الإلكتروني" 
+                                class="w-full bg-white/[0.03] border border-white/10 rounded-2xl pr-12 pl-4 py-4 text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-all text-sm font-medium">
+                        </div>
+                        <button onclick="updateAccountProfile()" class="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-3 rounded-xl transition-all active:scale-95 text-xs border border-white/10">حفظ التعديلات</button>
+                    </div>
+
+                    <div class="pt-4 space-y-4 border-t border-white/5">
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase px-2 mb-1">الأمان</label>
+                        <button onclick="requestPasswordReset()" class="w-full glass-panel bg-blue-500/5 border-blue-500/20 text-blue-400 py-4 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 hover:bg-blue-500/10 transition-all">
+                            <i class="fa-solid fa-key"></i> تغيير كلمة المرور
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Global Sync Indicator -->
+                <div class="mt-4 flex items-center justify-center gap-2 text-[10px] font-bold text-gray-600">
+                    <div id="sync-dot" class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                    <span id="sync-status-text">تتم المزامنة سحابياً...</span>
+                </div>
+
+                <div class="pt-8 border-t border-white/5">
+                    <button onclick="handleLogout()" 
+                        class="w-full bg-red-500/10 border border-red-500/20 text-red-400 py-3 rounded-xl font-bold hover:bg-red-500/20 transition-all active:scale-95 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج
+                    </button>
+                </div>
+            </div>
+
+            <p id="auth-error" class="text-red-400 text-xs font-bold text-center mt-2 hidden"></p>
+        </div>
+    </div>
+
+
     <!-- ================= MODALS ================= -->
 
     <!-- Modal: Add/Edit Task -->
@@ -1555,6 +1763,20 @@
 
     <!-- Application Logic -->
     <script>
+        // Firebase Configuration & Initialization
+        const firebaseConfig = {
+            apiKey: "AIzaSyAGweaizMqsiPNXwmVyuk7N96JIQP_UGgU",
+            authDomain: "new1-9f048.firebaseapp.com",
+            projectId: "new1-9f048",
+            storageBucket: "new1-9f048.firebasestorage.app",
+            messagingSenderId: "1055568035335",
+            appId: "1:1055568035335:web:16ebe1adc33ba868d3b4a2",
+            measurementId: "G-CSMBXW33NX"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
         // State Initialization
         let tasks = JSON.parse(localStorage.getItem('myNotebookTasks')) || [];
         let notes = JSON.parse(localStorage.getItem('myNotebookNotesArray')) || [];
@@ -1576,6 +1798,86 @@
         let pendingConfirmCallback = null;
         let currentGlobalArchiveTab = 'tasks';
         let currentDashboardTab = 'tasks';
+        let currentAuthMode = 'login';
+
+        // Auth Listener
+        auth.onAuthStateChanged(user => {
+            const entryBtnText = document.getElementById('auth-btn-text');
+            const entryBtnIcon = document.getElementById('auth-btn-icon');
+            const loggedInView = document.getElementById('auth-logged-in-view');
+            const authForms = document.querySelector('#subpage-auth .w-full.space-y-4');
+            const userEmailDisplay = document.getElementById('auth-user-email');
+
+                if (user) {
+                const displayName = user.displayName || user.email.split('@')[0];
+                if (entryBtnText) entryBtnText.innerText = `إعدادات حساب ${displayName}`;
+                if (entryBtnIcon) entryBtnIcon.className = 'fa-solid fa-user-check';
+                if (loggedInView) loggedInView.classList.remove('hidden');
+                if (authForms) authForms.classList.add('hidden');
+                
+                if (userEmailDisplay) userEmailDisplay.innerText = user.email;
+                if (document.getElementById('auth-title')) {
+                    document.getElementById('auth-title').innerHTML = `أهلاً ${displayName.split(' ')[0]} <i class="fa-solid fa-hand text-yellow-400 animate-wave text-[0.8em]"></i>`;
+                }
+
+                // Personalize Dashboard Greeting
+                const dashGreeting = document.getElementById('dashboard-greeting');
+                if (dashGreeting) {
+                    dashGreeting.innerHTML = `أهلاً بـ ${displayName.split(' ')[0]} <i class="fa-solid fa-hand text-yellow-400 animate-wave text-[0.8em]"></i>`;
+                }
+
+                if (document.getElementById('edit-username')) document.getElementById('edit-username').value = user.displayName || '';
+                if (document.getElementById('edit-email')) document.getElementById('edit-email').value = user.email || '';
+
+                if (document.getElementById('auth-subtitle')) document.getElementById('auth-subtitle').innerText = 'أهلاً بك في حسابك السحابي';
+                document.querySelector('#subpage-auth .w-full.bg-black\\/20').classList.add('hidden');
+                
+                updateAccountStats();
+                loadCloudData();
+            } else {
+                if (entryBtnText) entryBtnText.innerText = 'تسجيل/انشاء حساب';
+                if (entryBtnIcon) entryBtnIcon.className = 'fa-solid fa-right-to-bracket';
+
+                const dashGreeting = document.getElementById('dashboard-greeting');
+                if (dashGreeting) {
+                    dashGreeting.innerHTML = `أهلاً بك <i class="fa-solid fa-hand text-yellow-400 animate-wave text-[0.8em]"></i>`;
+                }
+
+                if (loggedInView) loggedInView.classList.add('hidden');
+                if (authForms) authForms.classList.remove('hidden');
+                document.querySelector('#subpage-auth .w-full.bg-black\\/20').classList.remove('hidden');
+                toggleAuthState(currentAuthMode); // reset visuals
+            }
+        });
+
+        // Global click listener to clear "waiting for archive" hints when clicking elsewhere
+        document.addEventListener('click', (e) => {
+            const taskItem = e.target.closest('.task-item');
+            const noteItem = e.target.closest('.note-item');
+            
+            let changed = false;
+            
+            const overlays = document.querySelectorAll('.waiting-archive-overlay');
+            if (overlays.length > 0 && !taskItem && !noteItem) {
+                // Add exit animation class
+                overlays.forEach(o => o.classList.add('exit'));
+                
+                // Wait for animation to finish before updating state/UI
+                setTimeout(() => {
+                    tasks.forEach(t => t.waitingForArchive = false);
+                    notes.forEach(n => n.waitingForArchive = false);
+                    updateUI();
+                }, 300);
+                return;
+            }
+
+            // If we click a different item, toggleTask already clears others, but let's ensure consistency
+            if (taskItem || noteItem) {
+                // If it's a click INSIDE an item, the individual click handlers (toggleTask / archiveNoteDirectly) 
+                // handle clearing other states immediately. We don't need a delay there for the "disappearing" ones
+                // because the user is focusing on a new one.
+            }
+        }, true);
 
         // Boot
         cleanupOldArchives();
@@ -1943,11 +2245,13 @@
         function saveTasks() {
             localStorage.setItem('myNotebookTasks', JSON.stringify(tasks));
             updateUI();
+            if (auth.currentUser) syncToCloud();
         }
 
         function saveNotesData() {
             localStorage.setItem('myNotebookNotesArray', JSON.stringify(notes));
             updateUI();
+            if (auth.currentUser) syncToCloud();
         }
 
         // -------------------------
@@ -2038,6 +2342,10 @@
                     task.waitingForArchive = false;
                     if (typeof fireConfetti === 'function') fireConfetti();
                 } else {
+                    // Clear other waiting tasks
+                    tasks.forEach(t => { if(t.id !== id) t.waitingForArchive = false; });
+                    notes.forEach(n => { n.waitingForArchive = false; });
+
                     // Increment repetition
                     task.currentRepetition = (task.currentRepetition || 0) + 1;
 
@@ -2306,6 +2614,10 @@
                     saveNotesData();
                     if (typeof fireConfetti === 'function') fireConfetti();
                 } else {
+                    // Clear other waiting states
+                    tasks.forEach(t => { t.waitingForArchive = false; });
+                    notes.forEach(n => { if(n.id !== id) n.waitingForArchive = false; });
+
                     // First click: intermediate state
                     note.waitingForArchive = true;
                     saveNotesData();
@@ -3341,12 +3653,12 @@
             const x = canvas.width / 2;
             const y = canvas.height;
 
-            for (let i = 0; i < 80; i++) {
+            for (let i = 0; i < 40; i++) {
                 particles.push({
                     x: x, y: y,
-                    r: Math.random() * 5 + 2,
-                    dx: Math.random() * 16 - 8,
-                    dy: Math.random() * -20 - 5,
+                    r: Math.random() * 3 + 1,
+                    dx: Math.random() * 10 - 5,
+                    dy: Math.random() * -12 - 4,
                     color: colors[Math.floor(Math.random() * colors.length)],
                     tilt: Math.random() * 10,
                     tiltAngleInc: (Math.random() * 0.07) + 0.05,
@@ -3439,6 +3751,256 @@
                 saveTasks();
             }
         }, 30000); // Check every 30 seconds
+
+        // -------------------------
+        // Auth Logic Functions
+        // -------------------------
+        function toggleAuthState(mode) {
+            currentAuthMode = mode;
+            const tabLogin = document.getElementById('tab-login');
+            const tabRegister = document.getElementById('tab-register');
+            const regFields = document.getElementById('register-only-fields');
+            const submitBtn = document.getElementById('auth-submit-btn');
+            const title = document.getElementById('auth-title');
+            const subtitle = document.getElementById('auth-subtitle');
+
+            if (mode === 'login') {
+                tabLogin.className = 'flex-1 py-3 text-xs font-black rounded-xl transition-all duration-300 bg-gray-700 text-white shadow-lg';
+                tabRegister.className = 'flex-1 py-3 text-xs font-black rounded-xl transition-all duration-300 text-gray-400 hover:text-white';
+                regFields.classList.add('hidden');
+                submitBtn.innerText = 'تسجيل الدخول';
+                title.innerHTML = 'مرحباً بك مجدداً <i class="fa-solid fa-hand text-yellow-400 animate-wave text-[0.8em]"></i>';
+                subtitle.innerText = 'قم بتسجيل الدخول لمزامنة بياناتك';
+            } else {
+                tabRegister.className = 'flex-1 py-3 text-xs font-black rounded-xl transition-all duration-300 bg-gray-700 text-white shadow-lg';
+                tabLogin.className = 'flex-1 py-3 text-xs font-black rounded-xl transition-all duration-300 text-gray-400 hover:text-white';
+                regFields.classList.remove('hidden');
+                submitBtn.innerText = 'إنشاء الحساب الجديد';
+                title.innerHTML = 'انضم إلى عائلتنا <i class="fa-solid fa-wand-magic-sparkles text-emerald-400 text-[0.9em]"></i>';
+                subtitle.innerText = 'ابدأ تجربة المزامنة السحابية اليوم';
+            }
+            document.getElementById('auth-error').classList.add('hidden');
+        }
+
+        async function handleAuthSubmit() {
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value;
+            const confirmPass = document.getElementById('auth-confirm-password').value;
+            const username = document.getElementById('auth-username').value.trim();
+            const errorEl = document.getElementById('auth-error');
+            const btn = document.getElementById('auth-submit-btn');
+
+            if (!email || !password || (currentAuthMode === 'register' && !username)) {
+                showAuthError('الرجاء تعبئة كافة الحقول المطلوبة.');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin ml-2"></i> جاري التحميل...';
+            errorEl.classList.add('hidden');
+
+            try {
+                if (currentAuthMode === 'register') {
+                    if (password !== confirmPass) {
+                        throw new Error('كلمتا المرور غير متطابقتين.');
+                    }
+                    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                    await userCredential.user.updateProfile({
+                        displayName: username
+                    });
+
+                    // Clear local data for fresh session
+                    localStorage.removeItem('myNotebookTasks');
+                    localStorage.removeItem('myNotebookNotesArray');
+                    tasks = [];
+                    notes = [];
+
+                    // Force refresh to update UI with display name
+                    window.location.reload();
+                } else {
+                    await auth.signInWithEmailAndPassword(email, password);
+                    
+                    // Clear local data for fresh session upon login too
+                    localStorage.removeItem('myNotebookTasks');
+                    localStorage.removeItem('myNotebookNotesArray');
+                    tasks = [];
+                    notes = [];
+                    updateUI();
+                }
+                // Success is handled by onAuthStateChanged listener
+                if (window.navigator.vibrate) window.navigator.vibrate([20, 50, 20]);
+            } catch (err) {
+                console.error(err);
+                showAuthError(translateFirebaseError(err.code));
+            } finally {
+                btn.disabled = false;
+                btn.innerText = currentAuthMode === 'login' ? 'تسجيل الدخول' : 'إنشاء الحساب الجديد';
+            }
+        }
+
+        function handleLogout() {
+            auth.signOut();
+            if (window.navigator.vibrate) window.navigator.vibrate(20);
+        }
+
+        function showAuthError(msg) {
+            const errorEl = document.getElementById('auth-error');
+            errorEl.innerText = msg;
+            errorEl.classList.remove('hidden');
+            if (window.navigator.vibrate) window.navigator.vibrate([100, 50, 100]);
+        }
+
+        function translateFirebaseError(code) {
+            switch (code) {
+                case 'auth/user-not-found': return 'المستخدم غير موجود.';
+                case 'auth/wrong-password': return 'كلمة المرور غير صحيحة.';
+                case 'auth/email-already-in-use': return 'البريد الإلكتروني مستخدم بالفعل.';
+                case 'auth/weak-password': return 'كلمة المرور ضعيفة جداً.';
+                case 'auth/invalid-email': return 'البريد الإلكتروني غير صالح.';
+                default: return 'حدث خطأ غير متوقع. حاول مرة أخرى.';
+            }
+        }
+
+        // -------------------------
+        // Cloud Sync & Account Features
+        // -------------------------
+        let isSyncing = false;
+
+        async function syncToCloud() {
+            if (!auth.currentUser || isSyncing) return;
+            isSyncing = true;
+            updateSyncStatus('syncing');
+
+            try {
+                await db.collection('users').doc(auth.currentUser.uid).set({
+                    tasks: tasks,
+                    notes: notes,
+                    lastSync: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+                updateSyncStatus('success');
+            } catch (err) {
+                console.error("Sync Error:", err);
+                updateSyncStatus('error');
+            } finally {
+                isSyncing = false;
+                updateAccountStats();
+            }
+        }
+
+        async function loadCloudData() {
+            if (!auth.currentUser) return;
+            updateSyncStatus('loading');
+
+            try {
+                const doc = await db.collection('users').doc(auth.currentUser.uid).get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    if (data.tasks) tasks = data.tasks;
+                    if (data.notes) notes = data.notes;
+                    
+                    localStorage.setItem('myNotebookTasks', JSON.stringify(tasks));
+                    localStorage.setItem('myNotebookNotesArray', JSON.stringify(notes));
+                    updateUI();
+                    updateAccountStats();
+                }
+                updateSyncStatus('success');
+            } catch (err) {
+                console.error("Load Error:", err);
+                updateSyncStatus('error');
+            }
+        }
+
+        function updateSyncStatus(status) {
+            const dot = document.getElementById('sync-dot');
+            const text = document.getElementById('sync-status-text');
+            if (!dot || !text) return;
+
+            dot.className = 'w-1.5 h-1.5 rounded-full transition-all duration-300';
+            if (status === 'syncing' || status === 'loading') {
+                dot.classList.add('bg-blue-400', 'animate-pulse');
+                text.innerText = 'جاري المزامنة...';
+            } else if (status === 'success') {
+                dot.classList.add('bg-emerald-500');
+                text.innerText = 'تمت المزامنة سحابياً ✓';
+            } else {
+                dot.classList.add('bg-red-500');
+                text.innerText = 'فشلت المزامنة!';
+            }
+        }
+
+        function switchAccountTab(tab) {
+            const btnStats = document.getElementById('acc-tab-stats');
+            const btnSett = document.getElementById('acc-tab-settings');
+            const viewStats = document.getElementById('acc-view-stats');
+            const viewSett = document.getElementById('acc-view-settings');
+
+            if (tab === 'stats') {
+                btnStats.className = 'flex-1 py-3 text-xs font-black rounded-xl transition-all duration-300 bg-gray-700 text-white shadow-lg';
+                btnSett.className = 'flex-1 py-3 text-xs font-black rounded-xl transition-all duration-300 text-gray-400 hover:text-white';
+                viewStats.classList.remove('hidden');
+                viewSett.classList.add('hidden');
+                updateAccountStats();
+            } else {
+                btnSett.className = 'flex-1 py-3 text-xs font-black rounded-xl transition-all duration-300 bg-gray-700 text-white shadow-lg';
+                btnStats.className = 'flex-1 py-3 text-xs font-black rounded-xl transition-all duration-300 text-gray-400 hover:text-white';
+                viewSett.classList.remove('hidden');
+                viewStats.classList.add('hidden');
+            }
+        }
+
+        function updateAccountStats() {
+            const taskCountEl = document.getElementById('acc-stat-tasks');
+            const noteCountEl = document.getElementById('acc-stat-notes');
+            const percentEl = document.getElementById('acc-stat-effort-percent');
+            const barEl = document.getElementById('acc-stat-effort-bar');
+
+            if (!taskCountEl) return;
+
+            const tDone = tasks.filter(t => t.completed).length;
+            const tTotal = tasks.length;
+            const nTotal = notes.length;
+
+            taskCountEl.innerText = tDone;
+            noteCountEl.innerText = nTotal;
+
+            const percent = tTotal > 0 ? Math.round((tDone / tTotal) * 100) : 0;
+            percentEl.innerText = `${percent}%`;
+            barEl.style.width = `${percent}%`;
+        }
+
+        async function updateAccountProfile() {
+            const user = auth.currentUser;
+            if (!user) return;
+
+            const newName = document.getElementById('edit-username').value.trim();
+            const newEmail = document.getElementById('edit-email').value.trim();
+
+            if (!newName && !newEmail) return;
+
+            try {
+                if (newName && newName !== user.displayName) {
+                    await user.updateProfile({ displayName: newName });
+                }
+                if (newEmail && newEmail !== user.email) {
+                    await user.updateEmail(newEmail);
+                }
+                alert('تم تحديث البيانات بنجاح!');
+                window.location.reload();
+            } catch (err) {
+                console.error(err);
+                alert('خطأ في التحديث: ' + translateFirebaseError(err.code));
+            }
+        }
+
+        function requestPasswordReset() {
+            const user = auth.currentUser;
+            if (!user) return;
+            auth.sendPasswordResetEmail(user.email).then(() => {
+                alert('تم إرسال رابط تعيين كلمة المرور إلى بريدك الإلكتروني.');
+            }).catch(err => {
+                alert('فشل الإرسال: ' + translateFirebaseError(err.code));
+            });
+        }
 
         // Glass Shimmer Splash Screen Management
         window.addEventListener('DOMContentLoaded', () => {

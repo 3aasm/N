@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <!-- Mobile Status Bar Color -->
-    <meta name="theme-color" content="#1f2937">
+    <meta name="theme-color" content="#0f172a">
     <title>مفكرتي - My Notebook</title>
 
     <!-- PWA / Apple Touch Icon Support -->
@@ -506,7 +506,8 @@
             stroke: url(#hex-grad);
             stroke-width: 3;
             stroke-linecap: round;
-            stroke-dasharray: 210; /* Approx perimeter */
+            stroke-dasharray: 210;
+            /* Approx perimeter */
             stroke-dashoffset: 210;
             transition: stroke-dashoffset 1.5s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
@@ -517,8 +518,17 @@
         }
 
         @keyframes hex-breathe {
-            0%, 100% { fill: rgba(16, 185, 129, 0.02); filter: blur(2px); }
-            50% { fill: rgba(16, 185, 129, 0.1); filter: blur(5px); }
+
+            0%,
+            100% {
+                fill: rgba(16, 185, 129, 0.02);
+                filter: blur(2px);
+            }
+
+            50% {
+                fill: rgba(16, 185, 129, 0.1);
+                filter: blur(5px);
+            }
         }
 
         .hex-success-state {
@@ -754,7 +764,8 @@
 
         /* Pin Specific Styles */
         .pinned-item {
-            border-color: rgba(234, 179, 8, 0.4) !important; /* Yellow-500/40 */
+            border-color: rgba(234, 179, 8, 0.4) !important;
+            /* Yellow-500/40 */
             box-shadow: 0 4px 15px -1px rgba(234, 179, 8, 0.1), inset 0 0 10px rgba(234, 179, 8, 0.05);
         }
 
@@ -763,20 +774,22 @@
         }
 
         .pin-btn.active {
-            color: #eab308 !important; /* Yellow-500 */
+            color: #eab308 !important;
+            /* Yellow-500 */
             opacity: 1 !important;
             filter: drop-shadow(0 0 5px rgba(234, 179, 8, 0.5));
         }
 
         @keyframes pin-ascend {
-            0% { 
-                transform: translateY(80px) scale(0.9); 
-                opacity: 0; 
+            0% {
+                transform: translateY(80px) scale(0.9);
+                opacity: 0;
                 filter: blur(10px);
             }
-            100% { 
-                transform: translateY(0) scale(1); 
-                opacity: 1; 
+
+            100% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
                 filter: blur(0);
             }
         }
@@ -854,7 +867,7 @@
 
     </div>
 
-    <main class="h-[100dvh] w-full flex flex-col relative overflow-hidden bg-gray-900">
+    <main class="h-[100dvh] w-full flex flex-col relative overflow-hidden bg-gray-900/40">
 
         <!-- Header (ONLY VISIBLE ON DASHBOARD NOW) -->
         <header id="main-header" class="p-0 shrink-0 z-10 transition-all duration-300 flex items-center">
@@ -891,13 +904,18 @@
                                         </linearGradient>
                                     </defs>
                                     <!-- Hex Path: M 40 10 L 66 25 L 66 55 L 40 70 L 14 55 L 14 25 Z -->
-                                    <path d="M 40 10 L 66 25 L 66 55 L 40 70 L 14 55 L 14 25 Z" class="hex-background"></path>
-                                    <path d="M 40 10 L 66 25 L 66 55 L 40 70 L 14 55 L 14 25 Z" class="hex-inner-glow"></path>
-                                    <path id="progress-hex" d="M 40 10 L 66 25 L 66 55 L 40 70 L 14 55 L 14 25 Z" class="hex-progress"></path>
+                                    <path d="M 40 10 L 66 25 L 66 55 L 40 70 L 14 55 L 14 25 Z" class="hex-background">
+                                    </path>
+                                    <path d="M 40 10 L 66 25 L 66 55 L 40 70 L 14 55 L 14 25 Z" class="hex-inner-glow">
+                                    </path>
+                                    <path id="progress-hex" d="M 40 10 L 66 25 L 66 55 L 40 70 L 14 55 L 14 25 Z"
+                                        class="hex-progress"></path>
                                 </svg>
                                 <div class="absolute inset-0 flex flex-col items-center justify-center pt-1">
-                                    <i class="fa-solid fa-bolt-lightning text-white/30 text-[10px] mb-[-2px] transition-all duration-500" id="achievement-icon"></i>
-                                    <span id="progress-percent" class="text-white text-[10px] font-black tracking-tighter">0%</span>
+                                    <i class="fa-solid fa-bolt-lightning text-white/30 text-[10px] mb-[-2px] transition-all duration-500"
+                                        id="achievement-icon"></i>
+                                    <span id="progress-percent"
+                                        class="text-white text-[10px] font-black tracking-tighter">0%</span>
                                 </div>
                             </div>
                         </div>
@@ -1008,7 +1026,8 @@
                         </button>
                         <button onclick="openTaskModal()"
                             class="flex items-center gap-2 h-[42px] bg-white/5 border border-white/10 hover:bg-white/10 text-gray-300 hover:text-white font-bold px-5 rounded-xl text-xs transition-all active:scale-95 shadow-sm">
-                            <i class="fa-solid fa-plus text-emerald-400"></i> <span class="hidden sm:inline">إضافة </span>مهمة
+                            <i class="fa-solid fa-plus text-emerald-400"></i> <span class="hidden sm:inline">إضافة
+                            </span>مهمة
                         </button>
                     </div>
                 </div>
@@ -1037,7 +1056,8 @@
                         </button>
                         <button onclick="openNoteModal()"
                             class="flex items-center gap-2 h-[42px] bg-white/5 border border-white/10 hover:bg-white/10 text-gray-300 hover:text-white font-bold px-5 rounded-xl text-xs transition-all active:scale-95 shadow-sm">
-                            <i class="fa-solid fa-plus text-blue-400"></i> <span class="hidden sm:inline">إضافة </span>ملاحظة
+                            <i class="fa-solid fa-plus text-blue-400"></i> <span class="hidden sm:inline">إضافة
+                            </span>ملاحظة
                         </button>
                     </div>
                 </div>
@@ -1865,10 +1885,10 @@
             </div>
             <h3 class="text-xl font-bold text-white mb-2">تأكيد الإجراء</h3>
             <p id="confirmMessageText" class="text-gray-300 text-sm mb-4 leading-relaxed"></p>
-            
+
             <!-- Password Verification Field (Shown only when needed) -->
             <div id="confirmPasswordContainer" class="hidden w-full mb-6">
-                <input type="password" id="confirmPasswordInput" placeholder="أدخل كلمة المرور للتأكيد" 
+                <input type="password" id="confirmPasswordInput" placeholder="أدخل كلمة المرور للتأكيد"
                     class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-center focus:outline-none focus:border-red-500/50 transition-all placeholder:text-gray-600">
                 <p id="confirmPasswordError" class="text-red-400 text-[10px] mt-2 hidden"></p>
             </div>
@@ -1980,7 +2000,7 @@
         // Timers for Debouncing
         let syncToCloudTimer = null;
         let autoSaveNoteTimer = null;
-        let cloudUnsubscribe = null; 
+        let cloudUnsubscribe = null;
 
         // Drag & Drop State
         let draggedTaskId = null;
@@ -2897,7 +2917,7 @@
 
             if (progressHex && progressPercentText) {
                 const percent = totalTasksToday > 0 ? Math.round((completedToday.length / totalTasksToday) * 100) : 0;
-                
+
                 // Perimeter is approx 210 units
                 const perimeter = 210;
                 const offset = perimeter - (perimeter * percent / 100);
@@ -3123,7 +3143,7 @@
 
         function handleTaskTouchStart(e, id) {
             if (isDraggingTask) return;
-            
+
             const touch = e.touches[0];
             dragStartY = touch.pageY;
             const scrollContainer = document.getElementById('main-scroll-container');
@@ -3171,7 +3191,7 @@
             if (targetTask && targetTask !== dragActiveElement) {
                 const rect = targetTask.getBoundingClientRect();
                 const mid = rect.top + rect.height / 2;
-                
+
                 if (touch.clientY < mid) {
                     targetTask.classList.add('drop-target-above');
                     dragOverElement = { el: targetTask, pos: 'above', id: parseInt(targetTask.dataset.id) };
@@ -3203,7 +3223,7 @@
                 el.classList.remove('drop-target-above', 'drop-target-below');
             });
             document.body.classList.remove('is-dragging-task');
-            
+
             isDraggingTask = false;
             draggedTaskId = null;
             dragActiveElement = null;
@@ -3217,7 +3237,7 @@
             if (sourceIdx === -1 || targetIdx === -1) return;
 
             const [movedTask] = tasks.splice(sourceIdx, 1);
-            
+
             let newIdx = tasks.findIndex(t => t.id === targetId);
             if (position === 'below') newIdx += 1;
 
@@ -3555,13 +3575,13 @@
         function switchView(viewName) {
             const views = document.querySelectorAll('.view-section');
             const target = document.getElementById(`view-${viewName}`);
-            
+
             if (!target) return;
 
             // Show target FIRST to ensure something is always rendered
             target.classList.remove('hidden');
             target.classList.add('block');
-            
+
             // Immediately hide other views
             views.forEach(el => {
                 if (el !== target) {
@@ -3572,7 +3592,7 @@
 
             // Smooth entrance for target
             target.animate([
-                { opacity: 0, transform: 'translateY(10px)' }, 
+                { opacity: 0, transform: 'translateY(10px)' },
                 { opacity: 1, transform: 'translateY(0)' }
             ], { duration: 300, easing: 'ease-out' });
 
@@ -3765,7 +3785,7 @@
             // Cancel timers and save immediately
             clearTimeout(autoSaveNoteTimer);
             clearTimeout(syncToCloudTimer);
-            
+
             const titleInput = document.getElementById('currentNoteTitle');
             const contentInput = document.getElementById('currentNoteContent');
             if (titleInput && contentInput) {
@@ -3961,7 +3981,7 @@
             confirmBtn.disabled = false;
             confirmBtn.innerHTML = 'نعم، متأكد';
             confirmBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-            
+
             if (passInput) passInput.value = '';
             if (passError) passError.classList.add('hidden');
             if (passCont) {
@@ -4087,7 +4107,7 @@
                 const passInput = document.getElementById('confirmPasswordInput');
                 const passError = document.getElementById('confirmPasswordError');
                 const confirmBtn = document.getElementById('confirmActionBtn');
-                
+
                 const password = passInput ? passInput.value : '';
 
                 if (showPass) {
@@ -4100,11 +4120,11 @@
 
                     confirmBtn.disabled = true;
                     confirmBtn.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin ml-2"></i> جاري التحقق...';
-                    
+
                     try {
                         const credential = firebase.auth.EmailAuthProvider.credential(user.email, password);
                         await user.reauthenticateWithCredential(credential);
-                        
+
                         // Success: Wipe Cloud Data first
                         await db.collection('users').doc(user.uid).delete();
                     } catch (err) {
@@ -4353,14 +4373,14 @@
         async function handleLogout() {
             const btn = event.currentTarget;
             if (!btn) return;
-            
+
             // Visual feedback: Logout specific loading state
             const originalContent = btn.innerHTML;
             btn.disabled = true;
             btn.classList.remove('bg-red-500/10', 'border-red-500/20', 'text-red-400');
             btn.classList.add('bg-red-500', 'text-white', 'border-red-400', 'shadow-[0_0_20px_rgba(239,68,68,0.3)]');
             btn.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin"></i> جاري تسجيل الخروج...';
-            
+
             if (window.navigator.vibrate) window.navigator.vibrate(20);
 
             // Small delay to let user see the animation
@@ -4372,7 +4392,7 @@
                     tasks = [];
                     notes = [];
                     updateUI();
-                    
+
                     // Refresh for a clean slate
                     window.location.reload();
                 } catch (err) {
@@ -4446,7 +4466,7 @@
 
                     if (doc.exists) {
                         const data = doc.data();
-                        
+
                         // Detect if data actually changed to avoid redundant UI renders
                         const tasksChanged = JSON.stringify(data.tasks) !== JSON.stringify(tasks);
                         const notesChanged = JSON.stringify(data.notes) !== JSON.stringify(notes);
@@ -4460,7 +4480,7 @@
                                 notes = data.notes;
                                 localStorage.setItem('myNotebookNotesArray', JSON.stringify(notes));
                             }
-                            
+
                             // Only update UI if we are NOT currently in the middle of editing a note
                             if (!currentEditingNoteId && !currentEditingTaskId) {
                                 updateUI();

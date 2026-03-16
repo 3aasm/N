@@ -710,6 +710,58 @@
             animation: task-entrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
+        /* Drag and Drop Styles */
+        .task-item.dragging {
+            z-index: 100;
+            opacity: 0.9;
+            scale: 1.02;
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5), 0 0 20px rgba(16, 185, 129, 0.2);
+            border-color: rgba(16, 185, 129, 0.5);
+            pointer-events: none;
+            transition: none !important;
+        }
+
+        .task-item.drop-target-above {
+            border-top: 2px solid #10b981;
+        }
+
+        .task-item.drop-target-below {
+            border-bottom: 2px solid #10b981;
+        }
+
+        /* Pin Specific Styles */
+        .pinned-item {
+            border-color: rgba(234, 179, 8, 0.4) !important; /* Yellow-500/40 */
+            box-shadow: 0 4px 15px -1px rgba(234, 179, 8, 0.1), inset 0 0 10px rgba(234, 179, 8, 0.05);
+        }
+
+        .pinned-item:hover {
+            border-color: rgba(234, 179, 8, 0.6) !important;
+        }
+
+        .pin-btn.active {
+            color: #eab308 !important; /* Yellow-500 */
+            opacity: 1 !important;
+            filter: drop-shadow(0 0 5px rgba(234, 179, 8, 0.5));
+        }
+
+        @keyframes pin-ascend {
+            0% { 
+                transform: translateY(80px) scale(0.9); 
+                opacity: 0; 
+                filter: blur(10px);
+            }
+            100% { 
+                transform: translateY(0) scale(1); 
+                opacity: 1; 
+                filter: blur(0);
+            }
+        }
+
+        .animate-pin-ascend {
+            animation: pin-ascend 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
         @keyframes wave {
             0% {
                 transform: rotate(0deg);
@@ -914,12 +966,12 @@
 
                     <div class="flex items-center gap-2">
                         <button onclick="openSubpage('tasks-archive')"
-                            class="flex items-center justify-center w-11 h-11 border border-white/10 bg-white/5 text-gray-400 hover:text-emerald-400 rounded-xl transition-all active:scale-95 shadow-sm"
+                            class="flex items-center justify-center w-[42px] h-[42px] border border-white/10 bg-white/5 text-gray-400 hover:text-emerald-400 rounded-xl transition-all active:scale-95 shadow-sm"
                             title="أرشيف المهام ">
                             <i class="fa-solid fa-box-archive text-base"></i>
                         </button>
                         <button onclick="openTaskModal()"
-                            class="flex items-center gap-2 bg-white/5 border border-white/10 hover:bg-white/10 text-gray-300 hover:text-white font-bold px-5 py-2.5 rounded-xl text-xs transition-all active:scale-95 shadow-sm">
+                            class="flex items-center gap-2 h-[42px] bg-white/5 border border-white/10 hover:bg-white/10 text-gray-300 hover:text-white font-bold px-5 rounded-xl text-xs transition-all active:scale-95 shadow-sm">
                             <i class="fa-solid fa-plus text-emerald-400"></i> <span class="hidden sm:inline">إضافة </span>مهمة
                         </button>
                     </div>
@@ -943,12 +995,12 @@
 
                     <div class="flex items-center gap-2">
                         <button onclick="openSubpage('notes-archive')"
-                            class="flex items-center justify-center w-11 h-11 border border-white/10 bg-white/5 text-gray-400 hover:text-blue-400 rounded-xl transition-all active:scale-95 shadow-sm"
+                            class="flex items-center justify-center w-[42px] h-[42px] border border-white/10 bg-white/5 text-gray-400 hover:text-blue-400 rounded-xl transition-all active:scale-95 shadow-sm"
                             title="أرشيف الملاحظات">
                             <i class="fa-solid fa-box-archive text-base"></i>
                         </button>
                         <button onclick="openNoteModal()"
-                            class="flex items-center gap-2 bg-white/5 border border-white/10 hover:bg-white/10 text-gray-300 hover:text-white font-bold px-5 py-2.5 rounded-xl text-xs transition-all active:scale-95 shadow-sm">
+                            class="flex items-center gap-2 h-[42px] bg-white/5 border border-white/10 hover:bg-white/10 text-gray-300 hover:text-white font-bold px-5 rounded-xl text-xs transition-all active:scale-95 shadow-sm">
                             <i class="fa-solid fa-plus text-blue-400"></i> <span class="hidden sm:inline">إضافة </span>ملاحظة
                         </button>
                     </div>
@@ -1776,7 +1828,15 @@
                 <i class="fa-solid fa-triangle-exclamation"></i>
             </div>
             <h3 class="text-xl font-bold text-white mb-2">تأكيد الإجراء</h3>
-            <p id="confirmMessageText" class="text-gray-300 text-sm mb-6 leading-relaxed"></p>
+            <p id="confirmMessageText" class="text-gray-300 text-sm mb-4 leading-relaxed"></p>
+            
+            <!-- Password Verification Field (Shown only when needed) -->
+            <div id="confirmPasswordContainer" class="hidden w-full mb-6">
+                <input type="password" id="confirmPasswordInput" placeholder="أدخل كلمة المرور للتأكيد" 
+                    class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-center focus:outline-none focus:border-red-500/50 transition-all placeholder:text-gray-600">
+                <p id="confirmPasswordError" class="text-red-400 text-[10px] mt-2 hidden"></p>
+            </div>
+
             <div class="flex gap-3 w-full">
                 <button onclick="closeConfirmModal()"
                     class="flex-1 bg-white/5 hover:bg-white/10 text-white font-bold py-3 rounded-xl transition-all active:scale-95 border border-white/10">
@@ -1860,6 +1920,7 @@
 
         let lastAddedTaskId = null;
         let lastAddedNoteId = null;
+        let lastPinnedItemId = null;
 
         let settings = JSON.parse(localStorage.getItem('myNotebookSettings')) || {
             glow: true,
@@ -1883,7 +1944,16 @@
         // Timers for Debouncing
         let syncToCloudTimer = null;
         let autoSaveNoteTimer = null;
-        let cloudUnsubscribe = null; // To stop listener on logout
+        let cloudUnsubscribe = null; 
+
+        // Drag & Drop State
+        let draggedTaskId = null;
+        let isDraggingTask = false;
+        let dragLongPressTimer = null;
+        let dragStartY = 0;
+        let dragStartScrollTop = 0;
+        let dragActiveElement = null;
+        let dragOverElement = null;
 
         // Auth Listener
         auth.onAuthStateChanged(user => {
@@ -2738,6 +2808,28 @@
             });
         }
 
+        function togglePinTask(id, event) {
+            if (event) event.stopPropagation();
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                task.pinned = !task.pinned;
+                if (task.pinned) lastPinnedItemId = id;
+                saveTasks();
+                if (window.navigator.vibrate) window.navigator.vibrate(10);
+            }
+        }
+
+        function togglePinNote(id, event) {
+            if (event) event.stopPropagation();
+            const note = notes.find(n => n.id === id);
+            if (note) {
+                note.pinned = !note.pinned;
+                if (note.pinned) lastPinnedItemId = id;
+                saveNotesData();
+                if (window.navigator.vibrate) window.navigator.vibrate(10);
+            }
+        }
+
         function deleteAllArchivedNotes() {
             const archivedCount = notes.filter(n => n.archived).length;
             if (archivedCount === 0) {
@@ -2756,7 +2848,7 @@
         // -------------------------
         function updateUI() {
             // Stats & Analytics
-            const activeTasks = tasks.filter(t => !t.completed);
+            const activeTasks = tasks.filter(t => !t.completed).sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
             const completedTasks = tasks.filter(t => t.completed);
             const completedToday = tasks.filter(t => t.completed && isToday(t.archivedAt));
             const totalTasksToday = [...activeTasks, ...completedToday].length;
@@ -2786,7 +2878,7 @@
             // Render Dashboard Content
             renderTasksList('dashboard-tasks-list', activeTasks.slice(0, 3));
 
-            const activeNotes = notes.filter(n => !n.archived);
+            const activeNotes = notes.filter(n => !n.archived).sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
             renderNotesList('dashboard-notes-list', activeNotes.slice(0, 2));
 
             // View Content Rendering
@@ -2796,6 +2888,9 @@
             const archivedNotes = notes.filter(n => n.archived);
             renderNotesList('active-notes-list', activeNotes);
             renderNotesList('archived-notes-list', archivedNotes);
+
+            // Reset after render to only animate the first time
+            setTimeout(() => { lastPinnedItemId = null; }, 1000);
         }
 
         function cleanupOldArchives() {
@@ -2835,9 +2930,21 @@
 
             listToRender.forEach(task => {
                 const isCompleted = task.completed;
+                const isPinned = task.pinned || false;
+                const isJustPinned = task.id === lastPinnedItemId;
                 const taskEl = document.createElement('div');
-                taskEl.className = 'task-item glass-panel bg-gray-800/40 rounded-2xl p-4 flex items-center gap-4 group hover:-translate-y-1 hover:border-emerald-500/40 hover:bg-gray-800/80 transition-all duration-300 cursor-pointer';
-                taskEl.onclick = (e) => toggleTask(task.id, e);
+                taskEl.className = `task-item glass-panel ${isPinned ? 'pinned-item' : 'bg-gray-800/40'} ${isJustPinned ? 'animate-pin-ascend' : ''} rounded-2xl p-4 flex items-center gap-4 group hover:-translate-y-1 hover:border-emerald-500/40 hover:bg-gray-800/80 transition-all duration-300 cursor-pointer`;
+                taskEl.dataset.id = task.id;
+
+                // Drag Events
+                if (!isCompleted && !isLocalArchive) {
+                    taskEl.addEventListener('touchstart', (e) => handleTaskTouchStart(e, task.id), { passive: true });
+                }
+
+                taskEl.onclick = (e) => {
+                    if (isDraggingTask) return;
+                    toggleTask(task.id, e);
+                };
 
                 let checkboxHTML = '';
                 const maxRep = task.maxRepetitions || 1;
@@ -2924,6 +3031,9 @@
                         </div>
                         <div class="flex items-center gap-1 shrink-0 relative z-30">
                             ${!isLocalArchive ? `
+                            <button onclick="togglePinTask(${task.id}, event)" class="pin-btn w-8 h-8 rounded-full flex items-center justify-center ${isPinned ? 'active text-yellow-500' : 'text-gray-500 opacity-40 hover:opacity-100'} transition-all" title="تثبيت">
+                                <i class="fa-solid fa-thumbtack text-sm"></i>
+                            </button>
                             <button onclick="editTask(${task.id}, event)" class="w-8 h-8 rounded-full flex items-center justify-center text-blue-400 opacity-60 hover:opacity-100 hover:bg-blue-500/10 transition-all" title="تعديل">
                                 <i class="fa-solid fa-pen text-sm"></i>
                             </button>
@@ -2936,9 +3046,124 @@
                 container.appendChild(taskEl);
             });
 
+            // Global Touch Listeners for Dragging Logic (if not already added)
+            initGlobalTaskDragListeners();
+
             if (isLocalArchive) {
                 appendGlobalArchiveButton(container, 'tasks');
             }
+        }
+
+        function initGlobalTaskDragListeners() {
+            if (window.hasTaskDragListeners) return;
+            window.hasTaskDragListeners = true;
+
+            document.addEventListener('touchmove', handleTaskTouchMove, { passive: false });
+            document.addEventListener('touchend', handleTaskTouchEnd, { passive: true });
+        }
+
+        function handleTaskTouchStart(e, id) {
+            if (isDraggingTask) return;
+            
+            const touch = e.touches[0];
+            dragStartY = touch.pageY;
+            const scrollContainer = document.getElementById('main-scroll-container');
+            dragStartScrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
+            draggedTaskId = id;
+            dragActiveElement = e.currentTarget;
+
+            clearTimeout(dragLongPressTimer);
+            dragLongPressTimer = setTimeout(() => {
+                isDraggingTask = true;
+                if (window.navigator.vibrate) window.navigator.vibrate(50);
+                if (dragActiveElement) {
+                    dragActiveElement.classList.add('dragging');
+                    document.body.classList.add('is-dragging-task');
+                }
+            }, 600);
+        }
+
+        function handleTaskTouchMove(e) {
+            if (!draggedTaskId) return;
+
+            const touch = e.touches[0];
+            const currentY = touch.pageY;
+            const diff = Math.abs(currentY - dragStartY);
+
+            if (!isDraggingTask) {
+                if (diff > 10) clearTimeout(dragLongPressTimer);
+                return;
+            }
+
+            e.preventDefault();
+
+            const moveY = currentY - dragStartY;
+            if (dragActiveElement) {
+                dragActiveElement.style.transform = `translateY(${moveY}px)`;
+            }
+
+            const elAtPoint = document.elementFromPoint(touch.clientX, touch.clientY);
+            const targetTask = elAtPoint ? elAtPoint.closest('.task-item') : null;
+
+            document.querySelectorAll('.task-item').forEach(el => {
+                el.classList.remove('drop-target-above', 'drop-target-below');
+            });
+
+            if (targetTask && targetTask !== dragActiveElement) {
+                const rect = targetTask.getBoundingClientRect();
+                const mid = rect.top + rect.height / 2;
+                
+                if (touch.clientY < mid) {
+                    targetTask.classList.add('drop-target-above');
+                    dragOverElement = { el: targetTask, pos: 'above', id: parseInt(targetTask.dataset.id) };
+                } else {
+                    targetTask.classList.add('drop-target-below');
+                    dragOverElement = { el: targetTask, pos: 'below', id: parseInt(targetTask.dataset.id) };
+                }
+            } else {
+                dragOverElement = null;
+            }
+        }
+
+        function handleTaskTouchEnd() {
+            clearTimeout(dragLongPressTimer);
+
+            if (isDraggingTask && draggedTaskId && dragOverElement) {
+                reorderTasks(draggedTaskId, dragOverElement.id, dragOverElement.pos);
+            }
+
+            resetDragState();
+        }
+
+        function resetDragState() {
+            if (dragActiveElement) {
+                dragActiveElement.classList.remove('dragging');
+                dragActiveElement.style.transform = '';
+            }
+            document.querySelectorAll('.task-item').forEach(el => {
+                el.classList.remove('drop-target-above', 'drop-target-below');
+            });
+            document.body.classList.remove('is-dragging-task');
+            
+            isDraggingTask = false;
+            draggedTaskId = null;
+            dragActiveElement = null;
+            dragOverElement = null;
+        }
+
+        function reorderTasks(sourceId, targetId, position) {
+            const sourceIdx = tasks.findIndex(t => t.id === sourceId);
+            const targetIdx = tasks.findIndex(t => t.id === targetId);
+
+            if (sourceIdx === -1 || targetIdx === -1) return;
+
+            const [movedTask] = tasks.splice(sourceIdx, 1);
+            
+            let newIdx = tasks.findIndex(t => t.id === targetId);
+            if (position === 'below') newIdx += 1;
+
+            tasks.splice(newIdx, 0, movedTask);
+            saveTasks();
         }
 
         function renderNotesList(containerId, notesList) {
@@ -2974,8 +3199,10 @@
 
             listToRender.forEach(note => {
                 const isArchived = note.archived;
+                const isPinned = note.pinned || false;
+                const isJustPinned = note.id === lastPinnedItemId;
                 const noteEl = document.createElement('div');
-                noteEl.className = 'note-item glass-panel bg-gray-800/40 rounded-2xl p-4 flex items-center gap-4 group hover:-translate-y-1 hover:border-emerald-500/40 hover:bg-gray-800/80 transition-all duration-300 cursor-pointer';
+                noteEl.className = `note-item glass-panel ${isPinned ? 'pinned-item' : 'bg-gray-800/40'} ${isJustPinned ? 'animate-pin-ascend' : ''} rounded-2xl p-4 flex items-center gap-4 group hover:-translate-y-1 hover:border-emerald-500/40 hover:bg-gray-800/80 transition-all duration-300 cursor-pointer`;
                 noteEl.onclick = () => openNoteModal(note.id);
 
                 let checkboxHTML = '';
@@ -3049,9 +3276,16 @@
                             </p>
                             <span class="block text-[10px] text-gray-600 mt-1">${note.updatedAt}</span>
                         </div>
-                        <button onclick="deleteNoteDirectly(${note.id}, event)" class="w-8 h-8 rounded-full flex items-center justify-center text-red-400 opacity-60 hover:opacity-100 hover:bg-red-500/10 transition-all relative z-10" title="حذف نهائي">
-                            <i class="fa-solid fa-trash-can text-sm"></i>
-                        </button>
+                        <div class="flex items-center gap-1 shrink-0 relative z-30">
+                            ${!isLocalArchive ? `
+                            <button onclick="togglePinNote(${note.id}, event)" class="pin-btn w-8 h-8 rounded-full flex items-center justify-center ${isPinned ? 'active text-yellow-500' : 'text-gray-500 opacity-40 hover:opacity-100'} transition-all" title="تثبيت">
+                                <i class="fa-solid fa-thumbtack text-sm"></i>
+                            </button>
+                            ` : ''}
+                            <button onclick="deleteNoteDirectly(${note.id}, event)" class="w-8 h-8 rounded-full flex items-center justify-center text-red-400 opacity-60 hover:opacity-100 hover:bg-red-500/10 transition-all relative z-10" title="حذف نهائي">
+                                <i class="fa-solid fa-trash-can text-sm"></i>
+                            </button>
+                        </div>
                     `;
                 container.appendChild(noteEl);
             });
@@ -3640,17 +3874,27 @@
             if (window.navigator.vibrate) window.navigator.vibrate(20);
         }
 
-        function customConfirm(message, acceptCallback) {
+        function customConfirm(message, acceptCallback, showPassword = false) {
             document.getElementById('confirmMessageText').innerText = message;
             pendingConfirmCallback = acceptCallback;
             const modal = document.getElementById('confirmModal');
             const cont = modal.querySelector('.glass-panel');
             const confirmBtn = document.getElementById('confirmActionBtn');
+            const passCont = document.getElementById('confirmPasswordContainer');
+            const passInput = document.getElementById('confirmPasswordInput');
+            const passError = document.getElementById('confirmPasswordError');
 
-            // Reset button state
+            // Reset state
             confirmBtn.disabled = false;
             confirmBtn.innerHTML = 'نعم، متأكد';
             confirmBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            
+            if (passInput) passInput.value = '';
+            if (passError) passError.classList.add('hidden');
+            if (passCont) {
+                if (showPassword) passCont.classList.remove('hidden');
+                else passCont.classList.add('hidden');
+            }
 
             modal.classList.remove('hidden');
             modal.classList.add('flex');
@@ -3658,6 +3902,7 @@
                 modal.classList.remove('opacity-0');
                 cont.classList.remove('scale-95');
                 cont.classList.add('scale-100');
+                if (showPassword && passInput) setTimeout(() => passInput.focus(), 300);
             });
         }
 
@@ -3761,9 +4006,45 @@
         // -------------------------
         // Utilities
         // -------------------------
-        function clearAllData() {
-            customConfirm('هل أنت متأكد من مسح كافة البيانات بصورة نهائية؟ سيتم إعادة تشغيل التطبيق.', () => {
+        async function clearAllData() {
+            const user = auth.currentUser;
+            const showPass = !!user;
+
+            customConfirm('هل أنت متأكد من مسح كافة البيانات بصورة نهائية؟ سيتم إعادة تشغيل التطبيق بحساب جديد.', async () => {
+                const passInput = document.getElementById('confirmPasswordInput');
+                const passError = document.getElementById('confirmPasswordError');
                 const confirmBtn = document.getElementById('confirmActionBtn');
+                
+                const password = passInput ? passInput.value : '';
+
+                if (showPass) {
+                    if (!password) {
+                        passError.innerText = 'يرجى إدخال كلمة المرور.';
+                        passError.classList.remove('hidden');
+                        if (window.navigator.vibrate) window.navigator.vibrate([100]);
+                        return;
+                    }
+
+                    confirmBtn.disabled = true;
+                    confirmBtn.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin ml-2"></i> جاري التحقق...';
+                    
+                    try {
+                        const credential = firebase.auth.EmailAuthProvider.credential(user.email, password);
+                        await user.reauthenticateWithCredential(credential);
+                        
+                        // Success: Wipe Cloud Data first
+                        await db.collection('users').doc(user.uid).delete();
+                    } catch (err) {
+                        console.error(err);
+                        passError.innerText = 'كلمة المرور غير صحيحة أو حدث خطأ في النظام.';
+                        passError.classList.remove('hidden');
+                        confirmBtn.disabled = false;
+                        confirmBtn.innerHTML = 'نعم، متأكد';
+                        if (window.navigator.vibrate) window.navigator.vibrate([100, 50, 100]);
+                        return;
+                    }
+                }
+
                 confirmBtn.disabled = true;
                 confirmBtn.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin ml-2"></i> جاري المسح...';
                 confirmBtn.classList.add('opacity-80', 'cursor-not-allowed');
@@ -3784,7 +4065,7 @@
                         }, 500);
                     }, 300);
                 }, 800);
-            });
+            }, showPass);
         }
 
         // -------------------------
@@ -3996,18 +4277,40 @@
             }
         }
 
-        function handleLogout() {
-            auth.signOut().then(() => {
-                // Clear all local data on logout
-                localStorage.clear();
-                tasks = [];
-                notes = [];
-                updateUI();
-                
-                // Refresh for a clean slate
-                window.location.reload();
-            });
+        async function handleLogout() {
+            const btn = event.currentTarget;
+            if (!btn) return;
+            
+            // Visual feedback: Logout specific loading state
+            const originalContent = btn.innerHTML;
+            btn.disabled = true;
+            btn.classList.remove('bg-red-500/10', 'border-red-500/20', 'text-red-400');
+            btn.classList.add('bg-red-500', 'text-white', 'border-red-400', 'shadow-[0_0_20px_rgba(239,68,68,0.3)]');
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin"></i> جاري تسجيل الخروج...';
+            
             if (window.navigator.vibrate) window.navigator.vibrate(20);
+
+            // Small delay to let user see the animation
+            setTimeout(async () => {
+                try {
+                    await auth.signOut();
+                    // Clear all local data on logout
+                    localStorage.clear();
+                    tasks = [];
+                    notes = [];
+                    updateUI();
+                    
+                    // Refresh for a clean slate
+                    window.location.reload();
+                } catch (err) {
+                    console.error("Logout Error:", err);
+                    // Reset button on error
+                    btn.disabled = false;
+                    btn.innerHTML = originalContent;
+                    btn.classList.add('bg-red-500/10', 'border-red-500/20', 'text-red-400');
+                    btn.classList.remove('bg-red-500', 'text-white', 'border-red-400', 'shadow-[0_0_20px_rgba(239,68,68,0.3)]');
+                }
+            }, 2000);
         }
 
         function showAuthError(msg) {

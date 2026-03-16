@@ -691,16 +691,59 @@
                 opacity: 0.9;
             }
         }
-        @keyframes wave {
-            0% { transform: rotate(0deg); }
-            10% { transform: rotate(14deg); }
-            20% { transform: rotate(-8deg); }
-            30% { transform: rotate(14deg); }
-            40% { transform: rotate(-4deg); }
-            50% { transform: rotate(10deg); }
-            60% { transform: rotate(0deg); }
-            100% { transform: rotate(0deg); }
+
+        @keyframes task-entrance {
+            0% {
+                opacity: 0;
+                transform: scale(0.9) translateY(10px);
+                filter: blur(5px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+                filter: blur(0);
+            }
         }
+
+        .animate-task-entrance {
+            animation: task-entrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes wave {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            10% {
+                transform: rotate(14deg);
+            }
+
+            20% {
+                transform: rotate(-8deg);
+            }
+
+            30% {
+                transform: rotate(14deg);
+            }
+
+            40% {
+                transform: rotate(-4deg);
+            }
+
+            50% {
+                transform: rotate(10deg);
+            }
+
+            60% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(0deg);
+            }
+        }
+
         .animate-wave {
             display: inline-block;
             transform-origin: 70% 70%;
@@ -752,11 +795,11 @@
     <main class="h-[100dvh] w-full flex flex-col relative overflow-hidden bg-gray-900/40">
 
         <!-- Header (ONLY VISIBLE ON DASHBOARD NOW) -->
-        <header id="main-header" class="p-4 pt-8 shrink-0 z-10 transition-all duration-300 flex items-center gap-3">
+        <header id="main-header" class="p-0 shrink-0 z-10 transition-all duration-300 flex items-center">
 
             <!-- Refined Premium Greeting Card -->
             <div
-                class="glass-panel h-20 px-4 sm:px-8 rounded-[2rem] bg-gradient-to-br from-gray-800/40 to-transparent border-white/5 relative overflow-hidden flex-1 flex items-center">
+                class="glass-panel h-20 px-4 sm:px-8 rounded-none bg-gradient-to-br from-gray-800/40 to-transparent border-x-0 border-t-0 border-white/5 relative overflow-hidden flex-1 flex items-center">
                 <div class="relative z-10 flex justify-between items-center w-full gap-2">
                     <div class="space-y-0.5 sm:space-y-1 text-right shrink-0">
                         <div class="flex items-center gap-2 sm:gap-3">
@@ -814,13 +857,18 @@
 
                         <!-- Compact Pill Switcher (Moved to top right) -->
                         <div
-                            class="bg-gray-900/40 p-1 rounded-full flex gap-1 border border-white/5 shadow-inner scale-90 sm:scale-100 origin-right">
+                            class="bg-gray-900/40 p-1 rounded-full flex gap-0 border border-white/5 shadow-inner scale-90 sm:scale-100 origin-right relative min-w-[140px]">
+                            <!-- Sliding Indicator -->
+                            <div id="db-tab-indicator"
+                                class="absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] bg-gray-700 rounded-full shadow-lg transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] z-0">
+                            </div>
+
                             <button id="db-tab-notes" onclick="switchDashboardTab('notes')"
-                                class="px-4 py-1.5 text-[10px] font-black rounded-full transition-all duration-300 text-gray-400 hover:text-white">
+                                class="flex-1 px-4 py-1.5 text-[10px] font-black rounded-full transition-all duration-300 text-gray-400 hover:text-white relative z-10 text-center">
                                 الملاحظات
                             </button>
                             <button id="db-tab-tasks" onclick="switchDashboardTab('tasks')"
-                                class="px-4 py-1.5 text-[10px] font-black rounded-full transition-all duration-300 bg-gray-700 text-white shadow-lg">
+                                class="flex-1 px-4 py-1.5 text-[10px] font-black rounded-full transition-all duration-300 text-white relative z-10 text-center">
                                 المهام
                             </button>
                         </div>
@@ -855,21 +903,24 @@
             <!-- VIEW: ALL TASKS -->
             <div id="view-tasks" class="view-section hidden">
                 <div
-                    class="sticky top-0 z-20 bg-gray-900/20 backdrop-blur-[4px] -mx-6 px-6 pt-4 pb-4 mb-4 border-b border-white/10 flex justify-between items-center">
-                    <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-layer-group text-emerald-500 text-sm"></i>
-                        <h2 class="text-white/80 text-lg font-bold tracking-wider">المهام النشطة</h2>
+                    class="sticky top-0 z-20 bg-gray-800/40 backdrop-blur-xl border-b border-white/10 -mx-6 px-6 py-4 mb-6 flex justify-between items-center shadow-lg transition-all">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+                            <i class="fa-solid fa-layer-group text-base"></i>
+                        </div>
+                        <h2 class="text-white font-black text-sm tracking-wide">المهام النشطة</h2>
                     </div>
 
-                    <div class="flex gap-2">
+                    <div class="flex items-center gap-2">
                         <button onclick="openSubpage('tasks-archive')"
-                            class="flex items-center justify-center w-10 h-10 border border-white/10 bg-white/5 text-gray-400 hover:text-emerald-400 rounded-xl transition-all active:scale-95 shadow-sm"
+                            class="flex items-center justify-center w-11 h-11 border border-white/10 bg-white/5 text-gray-400 hover:text-emerald-400 rounded-xl transition-all active:scale-95 shadow-sm"
                             title="أرشيف المهام ">
-                            <i class="fa-solid fa-box-archive"></i>
+                            <i class="fa-solid fa-box-archive text-base"></i>
                         </button>
                         <button onclick="openTaskModal()"
-                            class="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-gray-900 font-bold px-3 py-2 rounded-xl text-sm transition-all active:scale-95 shadow-[0_0_15px_rgba(16,185,129,0.3)]">
-                            <i class="fa-solid fa-plus"></i> إضافة مهمة
+                            class="flex items-center gap-2 bg-white/5 border border-white/10 hover:bg-white/10 text-gray-300 hover:text-white font-bold px-5 py-2.5 rounded-xl text-xs transition-all active:scale-95 shadow-sm">
+                            <i class="fa-solid fa-plus text-emerald-400"></i> <span class="hidden sm:inline">إضافة </span>مهمة
                         </button>
                     </div>
                 </div>
@@ -882,21 +933,23 @@
             <!-- VIEW: NOTES -->
             <div id="view-notes" class="view-section hidden">
                 <div
-                    class="sticky top-0 z-20 bg-gray-900/20 backdrop-blur-[4px] -mx-6 px-6 pt-4 pb-4 mb-4 border-b border-white/10 flex justify-between items-center">
-                    <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-book-open text-emerald-500 text-sm"></i>
-                        <h2 class="text-white/80 text-lg font-bold tracking-wider">ملاحظاتك السريعة</h2>
+                    class="sticky top-0 z-20 bg-gray-800/40 backdrop-blur-xl border-b border-white/10 -mx-6 px-6 py-4 mb-6 flex justify-between items-center shadow-lg transition-all">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400">
+                            <i class="fa-solid fa-book-open text-base"></i>
+                        </div>
+                        <h2 class="text-white font-black text-sm tracking-wide">ملاحظاتك السريعة</h2>
                     </div>
-                    <!-- Right side add button -->
-                    <div class="flex gap-2">
+
+                    <div class="flex items-center gap-2">
                         <button onclick="openSubpage('notes-archive')"
-                            class="flex items-center justify-center w-10 h-10 border border-white/10 bg-white/5 text-gray-400 hover:text-emerald-400 rounded-xl transition-all active:scale-95 shadow-sm"
+                            class="flex items-center justify-center w-11 h-11 border border-white/10 bg-white/5 text-gray-400 hover:text-blue-400 rounded-xl transition-all active:scale-95 shadow-sm"
                             title="أرشيف الملاحظات">
-                            <i class="fa-solid fa-box-archive"></i>
+                            <i class="fa-solid fa-box-archive text-base"></i>
                         </button>
                         <button onclick="openNoteModal()"
-                            class="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-gray-900 font-bold px-3 py-2 rounded-xl text-sm transition-all active:scale-95 shadow-[0_0_15px_rgba(16,185,129,0.3)]">
-                            <i class="fa-solid fa-plus"></i> ملاحظة
+                            class="flex items-center gap-2 bg-white/5 border border-white/10 hover:bg-white/10 text-gray-300 hover:text-white font-bold px-5 py-2.5 rounded-xl text-xs transition-all active:scale-95 shadow-sm">
+                            <i class="fa-solid fa-plus text-blue-400"></i> <span class="hidden sm:inline">إضافة </span>ملاحظة
                         </button>
                     </div>
                 </div>
@@ -909,10 +962,13 @@
             <!-- VIEW: SETTINGS -->
             <div id="view-settings" class="view-section hidden">
                 <div
-                    class="sticky top-0 z-20 bg-gray-900/20 backdrop-blur-[4px] -mx-6 px-6 pt-4 pb-4 mb-4 border-b border-white/10 flex justify-between items-center">
-                    <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-gear text-emerald-500 text-sm"></i>
-                        <h2 class="text-white/80 text-lg font-bold tracking-wider">الإعدادات</h2>
+                    class="sticky top-0 z-20 bg-gray-800/40 backdrop-blur-xl border-b border-white/10 -mx-6 px-6 py-4 mb-6 flex justify-between items-center shadow-lg transition-all">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400">
+                            <i class="fa-solid fa-gear text-base"></i>
+                        </div>
+                        <h2 class="text-white font-black text-sm tracking-wide">الإعدادات</h2>
                     </div>
                 </div>
 
@@ -1339,9 +1395,11 @@
             <!-- Branding Header -->
             <div class="text-center space-y-3">
                 <div class="inline-flex p-4 rounded-[2rem] bg-emerald-500/10 border border-emerald-500/20 mb-2">
-                    <i class="fa-solid fa-shield-halved text-4xl text-emerald-400 drop-shadow-[0_0_15px_rgba(16,185,129,0.5)]"></i>
+                    <i
+                        class="fa-solid fa-shield-halved text-4xl text-emerald-400 drop-shadow-[0_0_15px_rgba(16,185,129,0.5)]"></i>
                 </div>
-                <h3 id="auth-title" class="text-2xl font-black text-white tracking-tight">مرحباً بك مجدداً <i class="fa-solid fa-hand text-yellow-400 animate-wave text-[0.8em]"></i></h3>
+                <h3 id="auth-title" class="text-2xl font-black text-white tracking-tight">مرحباً بك مجدداً <i
+                        class="fa-solid fa-hand text-yellow-400 animate-wave text-[0.8em]"></i></h3>
                 <p id="auth-subtitle" class="text-gray-400 text-sm font-medium">قم بتسجيل الدخول لمزامنة بياناتك</p>
             </div>
 
@@ -1360,35 +1418,39 @@
             <!-- Forms -->
             <div class="w-full space-y-4">
                 <div class="relative group">
-                    <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-emerald-400 transition-colors">
+                    <div
+                        class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-emerald-400 transition-colors">
                         <i class="fa-solid fa-envelope"></i>
                     </div>
-                    <input type="email" id="auth-email" placeholder="البريد الإلكتروني" 
+                    <input type="email" id="auth-email" placeholder="البريد الإلكتروني"
                         class="w-full bg-white/[0.03] border border-white/10 rounded-2xl pr-12 pl-4 py-4 text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all text-sm font-medium">
                 </div>
 
                 <div class="relative group">
-                    <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-emerald-400 transition-colors">
+                    <div
+                        class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-emerald-400 transition-colors">
                         <i class="fa-solid fa-lock"></i>
                     </div>
-                    <input type="password" id="auth-password" placeholder="كلمة المرور" 
+                    <input type="password" id="auth-password" placeholder="كلمة المرور"
                         class="w-full bg-white/[0.03] border border-white/10 rounded-2xl pr-12 pl-4 py-4 text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all text-sm font-medium">
                 </div>
 
                 <div id="register-only-fields" class="hidden space-y-4">
                     <div class="relative group">
-                        <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-emerald-400 transition-colors">
+                        <div
+                            class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-emerald-400 transition-colors">
                             <i class="fa-solid fa-user-tag"></i>
                         </div>
-                        <input type="text" id="auth-username" placeholder="اسم المستخدم" 
+                        <input type="text" id="auth-username" placeholder="اسم المستخدم"
                             class="w-full bg-white/[0.03] border border-white/10 rounded-2xl pr-12 pl-4 py-4 text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all text-sm font-medium">
                     </div>
 
                     <div class="relative group">
-                        <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-emerald-400 transition-colors">
+                        <div
+                            class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-emerald-400 transition-colors">
                             <i class="fa-solid fa-check-double"></i>
                         </div>
-                        <input type="password" id="auth-confirm-password" placeholder="تأكيد كلمة المرور" 
+                        <input type="password" id="auth-confirm-password" placeholder="تأكيد كلمة المرور"
                             class="w-full bg-white/[0.03] border border-white/10 rounded-2xl pr-12 pl-4 py-4 text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all text-sm font-medium">
                     </div>
                 </div>
@@ -1416,11 +1478,13 @@
                 <!-- VIEW: Account Statistics -->
                 <div id="acc-view-stats" class="space-y-6">
                     <div class="grid grid-cols-2 gap-4">
-                        <div class="glass-panel p-4 rounded-3xl bg-emerald-500/5 border-emerald-500/10 flex flex-col items-center text-center">
+                        <div
+                            class="glass-panel p-4 rounded-3xl bg-emerald-500/5 border-emerald-500/10 flex flex-col items-center text-center">
                             <span class="text-emerald-400 text-[10px] font-bold uppercase mb-1">المهام المنجزة</span>
                             <span id="acc-stat-tasks" class="text-3xl font-black text-white">0</span>
                         </div>
-                        <div class="glass-panel p-4 rounded-3xl bg-blue-500/5 border-blue-500/10 flex flex-col items-center text-center">
+                        <div
+                            class="glass-panel p-4 rounded-3xl bg-blue-500/5 border-blue-500/10 flex flex-col items-center text-center">
                             <span class="text-blue-400 text-[10px] font-bold uppercase mb-1">الملاحظات</span>
                             <span id="acc-stat-notes" class="text-3xl font-black text-white">0</span>
                         </div>
@@ -1432,36 +1496,45 @@
                             <span id="acc-stat-effort-percent" class="text-emerald-400">0%</span>
                         </div>
                         <div class="h-3 w-full bg-white/5 rounded-full overflow-hidden p-0.5">
-                            <div id="acc-stat-effort-bar" class="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                            <div id="acc-stat-effort-bar"
+                                class="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-1000"
+                                style="width: 0%"></div>
                         </div>
-                        <p class="text-[10px] text-gray-500 leading-relaxed text-center px-4">هذا المؤشر يقيس مدى التزامك بإنهاء المهام التي حددتها اليوم.</p>
+                        <p class="text-[10px] text-gray-500 leading-relaxed text-center px-4">هذا المؤشر يقيس مدى
+                            التزامك بإنهاء المهام التي حددتها اليوم.</p>
                     </div>
                 </div>
 
                 <!-- VIEW: Account Settings -->
                 <div id="acc-view-settings" class="hidden space-y-5">
                     <div class="space-y-4">
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase px-2 mb-1">تعديل الملف الشخصي</label>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase px-2 mb-1">تعديل الملف
+                            الشخصي</label>
                         <div class="relative group">
-                            <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-emerald-400 transition-colors">
+                            <div
+                                class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-emerald-400 transition-colors">
                                 <i class="fa-solid fa-user-pen"></i>
                             </div>
-                            <input type="text" id="edit-username" placeholder="اسم المستخدم" 
+                            <input type="text" id="edit-username" placeholder="اسم المستخدم"
                                 class="w-full bg-white/[0.03] border border-white/10 rounded-2xl pr-12 pl-4 py-4 text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-all text-sm font-medium">
                         </div>
                         <div class="relative group">
-                            <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-emerald-400 transition-colors">
+                            <div
+                                class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-emerald-400 transition-colors">
                                 <i class="fa-solid fa-at"></i>
                             </div>
-                            <input type="email" id="edit-email" placeholder="البريد الإلكتروني" 
+                            <input type="email" id="edit-email" placeholder="البريد الإلكتروني"
                                 class="w-full bg-white/[0.03] border border-white/10 rounded-2xl pr-12 pl-4 py-4 text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-all text-sm font-medium">
                         </div>
-                        <button onclick="updateAccountProfile()" class="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-3 rounded-xl transition-all active:scale-95 text-xs border border-white/10">حفظ التعديلات</button>
+                        <button onclick="updateAccountProfile()"
+                            class="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-3 rounded-xl transition-all active:scale-95 text-xs border border-white/10">حفظ
+                            التعديلات</button>
                     </div>
 
                     <div class="pt-4 space-y-4 border-t border-white/5">
                         <label class="block text-[10px] font-bold text-gray-500 uppercase px-2 mb-1">الأمان</label>
-                        <button onclick="requestPasswordReset()" class="w-full glass-panel bg-blue-500/5 border-blue-500/20 text-blue-400 py-4 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 hover:bg-blue-500/10 transition-all">
+                        <button onclick="requestPasswordReset()"
+                            class="w-full glass-panel bg-blue-500/5 border-blue-500/20 text-blue-400 py-4 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 hover:bg-blue-500/10 transition-all">
                             <i class="fa-solid fa-key"></i> تغيير كلمة المرور
                         </button>
                     </div>
@@ -1474,7 +1547,7 @@
                 </div>
 
                 <div class="pt-8 border-t border-white/5">
-                    <button onclick="handleLogout()" 
+                    <button onclick="handleLogout()"
                         class="w-full bg-red-500/10 border border-red-500/20 text-red-400 py-3 rounded-xl font-bold hover:bg-red-500/20 transition-all active:scale-95 flex items-center justify-center gap-2">
                         <i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج
                     </button>
@@ -1781,6 +1854,9 @@
         let tasks = JSON.parse(localStorage.getItem('myNotebookTasks')) || [];
         let notes = JSON.parse(localStorage.getItem('myNotebookNotesArray')) || [];
 
+        let lastAddedTaskId = null;
+        let lastAddedNoteId = null;
+
         let settings = JSON.parse(localStorage.getItem('myNotebookSettings')) || {
             glow: true,
             notif: false,
@@ -1808,13 +1884,13 @@
             const authForms = document.querySelector('#subpage-auth .w-full.space-y-4');
             const userEmailDisplay = document.getElementById('auth-user-email');
 
-                if (user) {
+            if (user) {
                 const displayName = user.displayName || user.email.split('@')[0];
                 if (entryBtnText) entryBtnText.innerText = `إعدادات حساب ${displayName}`;
                 if (entryBtnIcon) entryBtnIcon.className = 'fa-solid fa-user-check';
                 if (loggedInView) loggedInView.classList.remove('hidden');
                 if (authForms) authForms.classList.add('hidden');
-                
+
                 if (userEmailDisplay) userEmailDisplay.innerText = user.email;
                 if (document.getElementById('auth-title')) {
                     document.getElementById('auth-title').innerHTML = `أهلاً ${displayName.split(' ')[0]} <i class="fa-solid fa-hand text-yellow-400 animate-wave text-[0.8em]"></i>`;
@@ -1831,7 +1907,7 @@
 
                 if (document.getElementById('auth-subtitle')) document.getElementById('auth-subtitle').innerText = 'أهلاً بك في حسابك السحابي';
                 document.querySelector('#subpage-auth .w-full.bg-black\\/20').classList.add('hidden');
-                
+
                 updateAccountStats();
                 loadCloudData();
             } else {
@@ -1854,14 +1930,14 @@
         document.addEventListener('click', (e) => {
             const taskItem = e.target.closest('.task-item');
             const noteItem = e.target.closest('.note-item');
-            
+
             let changed = false;
-            
+
             const overlays = document.querySelectorAll('.waiting-archive-overlay');
             if (overlays.length > 0 && !taskItem && !noteItem) {
                 // Add exit animation class
                 overlays.forEach(o => o.classList.add('exit'));
-                
+
                 // Wait for animation to finish before updating state/UI
                 setTimeout(() => {
                     tasks.forEach(t => t.waitingForArchive = false);
@@ -1929,28 +2005,29 @@
                     // Pulling DOWN at TOP (Stretch Down)
                     activePullType = 'top-down';
                     pullDistance = Math.abs(diff);
-                    const damped = Math.log10(1 + pullDistance / 100) * 120;
+                    // Smoother, more unrestricted damping
+                    const damped = Math.pow(pullDistance, 0.8) * 1.5;
                     list.style.transform = `translateY(${damped}px)`;
                     list.style.transition = 'none';
                 } else if (isAtTop && diff > 0 && scrollContainer.scrollHeight <= scrollContainer.clientHeight + 2) {
                     // Special case: Pulling UP at TOP when content is shorter than container
                     activePullType = 'top-up';
                     pullDistance = diff;
-                    const damped = Math.log10(1 + pullDistance / 100) * 120;
+                    const damped = Math.pow(pullDistance, 0.8) * 1.5;
                     list.style.transform = `translateY(${-damped}px)`;
                     list.style.transition = 'none';
                 } else if (isAtBottom && diff > 0) {
                     // Pulling UP at BOTTOM (Stretch Up)
                     activePullType = 'bottom-up';
                     pullDistance = diff;
-                    const damped = Math.log10(1 + pullDistance / 100) * 120;
+                    const damped = Math.pow(pullDistance, 0.8) * 1.5;
                     list.style.transform = `translateY(${-damped}px)`;
                     list.style.transition = 'none';
                 } else if (isAtBottom && diff < 0) {
                     // Pulling DOWN at BOTTOM (Reverse Stretch - Stretch Down)
                     activePullType = 'bottom-down';
                     pullDistance = Math.abs(diff);
-                    const damped = Math.log10(1 + pullDistance / 100) * 120;
+                    const damped = Math.pow(pullDistance, 0.8) * 1.5;
                     list.style.transform = `translateY(${damped}px)`;
                     list.style.transition = 'none';
                 } else {
@@ -1969,7 +2046,8 @@
                 if (activeView) {
                     const list = activeView.querySelector('div.flex.flex-col.gap-4') || activeView.querySelector('.space-y-6');
                     if (list) {
-                        list.style.transition = 'transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                        // More natural, fluid snap-back
+                        list.style.transition = 'transform 0.5s cubic-bezier(0.2, 0, 0.2, 1)';
                         list.style.transform = '';
                     }
                 }
@@ -2298,6 +2376,7 @@
                     showBgIcon: document.getElementById('newTaskShowBgIcon').checked
                 };
                 tasks.unshift(newTask);
+                lastAddedTaskId = newTask.id;
             }
 
             saveTasks();
@@ -2343,7 +2422,7 @@
                     if (typeof fireConfetti === 'function') fireConfetti();
                 } else {
                     // Clear other waiting tasks
-                    tasks.forEach(t => { if(t.id !== id) t.waitingForArchive = false; });
+                    tasks.forEach(t => { if (t.id !== id) t.waitingForArchive = false; });
                     notes.forEach(n => { n.waitingForArchive = false; });
 
                     // Increment repetition
@@ -2580,6 +2659,7 @@
                 };
                 notes.unshift(newNote);
                 currentEditingNoteId = newNote.id; // From now on, it patches this new note
+                lastAddedNoteId = newNote.id;
             }
 
             // If we are editing, update the icon too if it changed
@@ -2616,7 +2696,7 @@
                 } else {
                     // Clear other waiting states
                     tasks.forEach(t => { t.waitingForArchive = false; });
-                    notes.forEach(n => { if(n.id !== id) n.waitingForArchive = false; });
+                    notes.forEach(n => { if (n.id !== id) n.waitingForArchive = false; });
 
                     // First click: intermediate state
                     note.waitingForArchive = true;
@@ -2786,6 +2866,11 @@
                     if (task.showBgIcon) bgIconHTML = '<i class="fa-solid fa-fire absolute left-10 top-1/2 -translate-y-1/2 text-gray-400/10 text-6xl pointer-events-none transition-all duration-500"></i>';
                 }
 
+                if (task.id === lastAddedTaskId) {
+                    taskEl.classList.add('animate-task-entrance');
+                    // Reset after one scroll or some UI action, or just leave it for this render
+                }
+
                 taskEl.classList.add('relative', 'overflow-hidden');
 
                 let waitingOverlay = '';
@@ -2912,6 +2997,10 @@
                 }
 
                 noteEl.classList.add('relative', 'overflow-hidden');
+
+                if (note.id === lastAddedNoteId) {
+                    noteEl.classList.add('animate-task-entrance');
+                }
 
                 let waitingOverlay = '';
                 if (note.waitingForArchive) {
@@ -3090,43 +3179,64 @@
         }
 
         function switchDashboardTab(tab) {
+            if (currentDashboardTab === tab) return;
             currentDashboardTab = tab;
+
             const tasksPanel = document.getElementById('dashboard-tasks-panel');
             const notesPanel = document.getElementById('dashboard-notes-panel');
             const tasksBtn = document.getElementById('db-tab-tasks');
             const notesBtn = document.getElementById('db-tab-notes');
+            const tabIndicator = document.getElementById('db-tab-indicator');
 
             const title = document.getElementById('db-title');
             const indicator = document.getElementById('db-indicator');
             const viewAll = document.getElementById('db-view-all-btn');
 
+            // Apply sliding animation
             if (tab === 'tasks') {
-                tasksPanel.classList.remove('hidden');
-                notesPanel.classList.add('hidden');
+                if (tabIndicator) tabIndicator.style.transform = 'translateX(0)';
 
-                tasksBtn.className = 'px-4 py-1.5 text-[10px] font-black rounded-full transition-all duration-300 bg-gray-700 text-white shadow-lg';
-                notesBtn.className = 'px-4 py-1.5 text-[10px] font-black rounded-full transition-all duration-300 text-gray-400 hover:text-white';
+                tasksBtn.classList.remove('text-gray-400');
+                tasksBtn.classList.add('text-white');
+                notesBtn.classList.remove('text-white');
+                notesBtn.classList.add('text-gray-400');
+
+                // Animate panels
+                notesPanel.classList.add('hidden');
+                tasksPanel.classList.remove('hidden');
+                tasksPanel.animate([
+                    { opacity: 0, transform: 'translateX(20px)' },
+                    { opacity: 1, transform: 'translateX(0)' }
+                ], { duration: 400, easing: 'ease-out' });
 
                 if (title) title.innerText = 'أهم الأولويات';
                 if (indicator) indicator.className = 'w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]';
                 if (viewAll) {
                     viewAll.onclick = () => switchView('tasks');
-                    viewAll.className = 'flex items-center gap-2 bg-transparent text-gray-500 hover:text-white font-bold px-6 py-2.5 rounded-2xl text-[10px] transition-all active:scale-95 group';
                 }
             } else {
-                notesPanel.classList.remove('hidden');
-                tasksPanel.classList.add('hidden');
+                if (tabIndicator) tabIndicator.style.transform = 'translateX(100%)';
 
-                notesBtn.className = 'px-4 py-1.5 text-[10px] font-black rounded-full transition-all duration-300 bg-gray-700 text-white shadow-lg';
-                tasksBtn.className = 'px-4 py-1.5 text-[10px] font-black rounded-full transition-all duration-300 text-gray-400 hover:text-white';
+                notesBtn.classList.remove('text-gray-400');
+                notesBtn.classList.add('text-white');
+                tasksBtn.classList.remove('text-white');
+                tasksBtn.classList.add('text-gray-400');
+
+                // Animate panels
+                tasksPanel.classList.add('hidden');
+                notesPanel.classList.remove('hidden');
+                notesPanel.animate([
+                    { opacity: 0, transform: 'translateX(-20px)' },
+                    { opacity: 1, transform: 'translateX(0)' }
+                ], { duration: 400, easing: 'ease-out' });
 
                 if (title) title.innerText = 'أحدث الملاحظات';
                 if (indicator) indicator.className = 'w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_#3b82f6]';
                 if (viewAll) {
                     viewAll.onclick = () => switchView('notes');
-                    viewAll.className = 'flex items-center gap-2 bg-transparent text-gray-500 hover:text-white font-bold px-6 py-2.5 rounded-2xl text-[10px] transition-all active:scale-95 group';
                 }
             }
+            if (window.navigator.vibrate) window.navigator.vibrate(5);
         }
 
         // -------------------------
@@ -3819,7 +3929,7 @@
                     window.location.reload();
                 } else {
                     await auth.signInWithEmailAndPassword(email, password);
-                    
+
                     // Clear local data for fresh session upon login too
                     localStorage.removeItem('myNotebookTasks');
                     localStorage.removeItem('myNotebookNotesArray');
@@ -3897,7 +4007,7 @@
                     const data = doc.data();
                     if (data.tasks) tasks = data.tasks;
                     if (data.notes) notes = data.notes;
-                    
+
                     localStorage.setItem('myNotebookTasks', JSON.stringify(tasks));
                     localStorage.setItem('myNotebookNotesArray', JSON.stringify(notes));
                     updateUI();

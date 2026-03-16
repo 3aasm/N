@@ -1850,6 +1850,10 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
+        // 1. Ensure Persistence (Auth stays logged in)
+        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+            .catch(err => console.error("Persistence Error:", err));
+
         // State Initialization
         let tasks = JSON.parse(localStorage.getItem('myNotebookTasks')) || [];
         let notes = JSON.parse(localStorage.getItem('myNotebookNotesArray')) || [];
@@ -1875,6 +1879,11 @@
         let currentGlobalArchiveTab = 'tasks';
         let currentDashboardTab = 'tasks';
         let currentAuthMode = 'login';
+
+        // Timers for Debouncing
+        let syncToCloudTimer = null;
+        let autoSaveNoteTimer = null;
+        let cloudUnsubscribe = null; // To stop listener on logout
 
         // Auth Listener
         auth.onAuthStateChanged(user => {
@@ -1909,8 +1918,11 @@
                 document.querySelector('#subpage-auth .w-full.bg-black\\/20').classList.add('hidden');
 
                 updateAccountStats();
-                loadCloudData();
+                // loadCloudData(); // Replaced by real-time listener
+                listenToCloudData();
             } else {
+                if (cloudUnsubscribe) cloudUnsubscribe(); // Stop listening
+                cloudUnsubscribe = null;
                 if (entryBtnText) entryBtnText.innerText = 'تسجيل/انشاء حساب';
                 if (entryBtnIcon) entryBtnIcon.className = 'fa-solid fa-right-to-bracket';
 
@@ -2323,13 +2335,13 @@
         function saveTasks() {
             localStorage.setItem('myNotebookTasks', JSON.stringify(tasks));
             updateUI();
-            if (auth.currentUser) syncToCloud();
+            if (auth.currentUser) syncToCloudDebounced();
         }
 
         function saveNotesData() {
             localStorage.setItem('myNotebookNotesArray', JSON.stringify(notes));
             updateUI();
-            if (auth.currentUser) syncToCloud();
+            if (auth.currentUser) syncToCloudDebounced();
         }
 
         // -------------------------
@@ -2631,45 +2643,50 @@
         }
 
         function autoSaveNote() {
-            const titleInput = document.getElementById('currentNoteTitle');
-            const contentInput = document.getElementById('currentNoteContent');
-            const title = titleInput.value.trim();
-            const content = contentInput.innerHTML.trim();
+            clearTimeout(autoSaveNoteTimer);
+            autoSaveNoteTimer = setTimeout(() => {
+                const titleInput = document.getElementById('currentNoteTitle');
+                const contentInput = document.getElementById('currentNoteContent');
+                const title = titleInput.value.trim();
+                const content = contentInput.innerHTML.trim();
 
-            if (!content && !title) {
-                return;
-            }
-
-            if (currentEditingNoteId) {
-                const note = notes.find(n => n.id === currentEditingNoteId);
-                if (note) {
-                    note.title = title || 'بدون عنوان';
-                    note.content = content;
-                    note.updatedAt = new Date().toLocaleDateString('ar-EG');
+                if (!content && !title) {
+                    return;
                 }
-            } else {
-                const newNote = {
-                    id: Date.now(),
-                    title: title || 'بدون عنوان',
-                    content: content,
-                    archived: false,
-                    archivedAt: null,
-                    bgIcon: currentEditingNoteBgIcon,
-                    updatedAt: new Date().toLocaleDateString('ar-EG')
-                };
-                notes.unshift(newNote);
-                currentEditingNoteId = newNote.id; // From now on, it patches this new note
-                lastAddedNoteId = newNote.id;
-            }
 
-            // If we are editing, update the icon too if it changed
-            if (currentEditingNoteId) {
-                const note = notes.find(n => n.id === currentEditingNoteId);
-                if (note) note.bgIcon = currentEditingNoteBgIcon;
-            }
+                if (currentEditingNoteId) {
+                    const note = notes.find(n => n.id === currentEditingNoteId);
+                    if (note) {
+                        note.title = title || 'بدون عنوان';
+                        note.content = content;
+                        note.updatedAt = new Date().toLocaleDateString('ar-EG');
+                    }
+                } else {
+                    const newNote = {
+                        id: Date.now(),
+                        title: title || 'بدون عنوان',
+                        content: content,
+                        archived: false,
+                        archivedAt: null,
+                        bgIcon: currentEditingNoteBgIcon,
+                        updatedAt: new Date().toLocaleDateString('ar-EG')
+                    };
+                    notes.unshift(newNote);
+                    currentEditingNoteId = newNote.id; // From now on, it patches this new note
+                    lastAddedNoteId = newNote.id;
+                }
 
-            // Save without triggering a full UI update instantly to avoid losing focus
-            localStorage.setItem('myNotebookNotesArray', JSON.stringify(notes));
+                // If we are editing, update the icon too if it changed
+                if (currentEditingNoteId) {
+                    const note = notes.find(n => n.id === currentEditingNoteId);
+                    if (note) note.bgIcon = currentEditingNoteBgIcon;
+                }
+
+                // Save to local storage
+                localStorage.setItem('myNotebookNotesArray', JSON.stringify(notes));
+                // Trigger debounced cloud sync
+                syncToCloudDebounced();
+            }, 800);
         }
 
         function unarchiveNote(id, event) {
@@ -3438,10 +3455,41 @@
         }
 
         function closeNoteModal() {
+            // Cancel timers and save immediately
+            clearTimeout(autoSaveNoteTimer);
+            clearTimeout(syncToCloudTimer);
+            
+            const titleInput = document.getElementById('currentNoteTitle');
+            const contentInput = document.getElementById('currentNoteContent');
+            if (titleInput && contentInput) {
+                // Force a final local and cloud save
+                const title = titleInput.value.trim();
+                const content = contentInput.innerHTML.trim();
+                if (title || content) {
+                    if (currentEditingNoteId) {
+                        const note = notes.find(n => n.id === currentEditingNoteId);
+                        if (note) {
+                            note.title = title || 'بدون عنوان';
+                            note.content = content;
+                        }
+                    } else if (content || title) {
+                        notes.unshift({
+                            id: Date.now(),
+                            title: title || 'بدون عنوان',
+                            content: content,
+                            archived: false,
+                            updatedAt: new Date().toLocaleDateString('ar-EG')
+                        });
+                    }
+                    localStorage.setItem('myNotebookNotesArray', JSON.stringify(notes));
+                    syncToCloud(); // Immediate sync
+                }
+            }
+
             closeSubpage('note-editor');
             setTimeout(() => {
                 currentEditingNoteId = null;
-                updateUI(); // refresh UI to reflect the auto-saved data
+                updateUI(); // refresh UI to reflect the saved data
             }, 300);
         }
 
@@ -3949,7 +3997,16 @@
         }
 
         function handleLogout() {
-            auth.signOut();
+            auth.signOut().then(() => {
+                // Clear all local data on logout
+                localStorage.clear();
+                tasks = [];
+                notes = [];
+                updateUI();
+                
+                // Refresh for a clean slate
+                window.location.reload();
+            });
             if (window.navigator.vibrate) window.navigator.vibrate(20);
         }
 
@@ -3976,6 +4033,11 @@
         // -------------------------
         let isSyncing = false;
 
+        function syncToCloudDebounced() {
+            clearTimeout(syncToCloudTimer);
+            syncToCloudTimer = setTimeout(syncToCloud, 1500); // Faster sync for multi-device feel
+        }
+
         async function syncToCloud() {
             if (!auth.currentUser || isSyncing) return;
             isSyncing = true;
@@ -3995,6 +4057,46 @@
                 isSyncing = false;
                 updateAccountStats();
             }
+        }
+
+        function listenToCloudData() {
+            if (!auth.currentUser) return;
+            if (cloudUnsubscribe) cloudUnsubscribe();
+
+            cloudUnsubscribe = db.collection('users').doc(auth.currentUser.uid)
+                .onSnapshot((doc) => {
+                    // Skip if changes haven't been written to backend yet or if we're currently typing/syncing
+                    if (doc.metadata.hasPendingWrites || isSyncing) return;
+
+                    if (doc.exists) {
+                        const data = doc.data();
+                        
+                        // Detect if data actually changed to avoid redundant UI renders
+                        const tasksChanged = JSON.stringify(data.tasks) !== JSON.stringify(tasks);
+                        const notesChanged = JSON.stringify(data.notes) !== JSON.stringify(notes);
+
+                        if (tasksChanged || notesChanged) {
+                            if (data.tasks) {
+                                tasks = data.tasks;
+                                localStorage.setItem('myNotebookTasks', JSON.stringify(tasks));
+                            }
+                            if (data.notes) {
+                                notes = data.notes;
+                                localStorage.setItem('myNotebookNotesArray', JSON.stringify(notes));
+                            }
+                            
+                            // Only update UI if we are NOT currently in the middle of editing a note
+                            if (!currentEditingNoteId && !currentEditingTaskId) {
+                                updateUI();
+                                updateAccountStats();
+                            }
+                        }
+                        updateSyncStatus('success');
+                    }
+                }, (error) => {
+                    console.error("Snapshot Error:", error);
+                    updateSyncStatus('error');
+                });
         }
 
         async function loadCloudData() {

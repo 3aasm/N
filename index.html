@@ -56,8 +56,8 @@
 
         body {
             font-family: 'Tajawal', sans-serif;
-            background-color: #1f2937;
-            /* Default gray background */
+            background-color: #0f172a;
+            /* Solid dark fallback to prevent white flicker */
             color: white;
             overflow: hidden;
             transition: background-image 0.5s ease-in-out, background-color 0.5s ease-in-out;
@@ -484,22 +484,45 @@
             height: 80px;
         }
 
-        .circular-progress-bg {
-            fill: none;
-            stroke: rgba(255, 255, 255, 0.05);
-            stroke-width: 8;
+        .hex-core-container {
+            width: 56px;
+            height: 56px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.2));
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
-        .circular-progress-fill {
+        .hex-background {
+            fill: rgba(255, 255, 255, 0.03);
+            stroke: rgba(255, 255, 255, 0.08);
+            stroke-width: 2;
+        }
+
+        .hex-progress {
             fill: none;
-            stroke: #10b981;
-            stroke-width: 8;
+            stroke: url(#hex-grad);
+            stroke-width: 3;
             stroke-linecap: round;
-            stroke-dasharray: 226.2;
-            stroke-dashoffset: 226.2;
-            transition: stroke-dashoffset 1s ease-out;
-            transform: rotate(-90deg);
-            transform-origin: center;
+            stroke-dasharray: 210; /* Approx perimeter */
+            stroke-dashoffset: 210;
+            transition: stroke-dashoffset 1.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .hex-inner-glow {
+            fill: rgba(16, 185, 129, 0.05);
+            animation: hex-breathe 4s infinite ease-in-out;
+        }
+
+        @keyframes hex-breathe {
+            0%, 100% { fill: rgba(16, 185, 129, 0.02); filter: blur(2px); }
+            50% { fill: rgba(16, 185, 129, 0.1); filter: blur(5px); }
+        }
+
+        .hex-success-state {
+            filter: drop-shadow(0 0 15px rgba(234, 179, 8, 0.6));
         }
 
         /* Glass Shimmer Splash Screen - Minimalist & Premium */
@@ -829,22 +852,9 @@
             class="absolute top-1/4 -left-1/4 w-[150%] h-[40%] bg-gradient-to-r from-white/[0.02] to-transparent transform -skew-y-12 backdrop-blur-[2px]">
         </div>
 
-        <!-- Achievement Watermark -->
-        <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03]">
-            <div class="circular-progress-wrap w-[400px] h-[400px]">
-                <svg viewBox="0 0 80 80" class="w-full h-full">
-                    <circle cx="40" cy="40" r="36" class="circular-progress-bg" stroke-width="4"></circle>
-                    <circle id="progress-circle" cx="40" cy="40" r="36" class="circular-progress-fill" stroke-width="4">
-                    </circle>
-                </svg>
-                <div class="absolute inset-0 flex items-center justify-center">
-                    <span id="progress-percent" class="text-white text-[80px] font-black italic">0%</span>
-                </div>
-            </div>
-        </div>
     </div>
 
-    <main class="h-[100dvh] w-full flex flex-col relative overflow-hidden bg-gray-900/40">
+    <main class="h-[100dvh] w-full flex flex-col relative overflow-hidden bg-gray-900">
 
         <!-- Header (ONLY VISIBLE ON DASHBOARD NOW) -->
         <header id="main-header" class="p-0 shrink-0 z-10 transition-all duration-300 flex items-center">
@@ -866,6 +876,32 @@
                     </div>
 
                     <div class="flex items-center gap-3 sm:gap-6 shrink-0">
+                        <!-- Achievement Hex Core (Professional Redesign) -->
+                        <div class="flex items-center gap-3 group">
+                            <div class="hex-core-container" id="hex-core-wrap">
+                                <svg viewBox="0 0 80 80" class="w-full h-full">
+                                    <defs>
+                                        <linearGradient id="hex-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#10b981" />
+                                            <stop offset="100%" stop-color="#3b82f6" />
+                                        </linearGradient>
+                                        <linearGradient id="hex-grad-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#fbbf24" />
+                                            <stop offset="100%" stop-color="#f59e0b" />
+                                        </linearGradient>
+                                    </defs>
+                                    <!-- Hex Path: M 40 10 L 66 25 L 66 55 L 40 70 L 14 55 L 14 25 Z -->
+                                    <path d="M 40 10 L 66 25 L 66 55 L 40 70 L 14 55 L 14 25 Z" class="hex-background"></path>
+                                    <path d="M 40 10 L 66 25 L 66 55 L 40 70 L 14 55 L 14 25 Z" class="hex-inner-glow"></path>
+                                    <path id="progress-hex" d="M 40 10 L 66 25 L 66 55 L 40 70 L 14 55 L 14 25 Z" class="hex-progress"></path>
+                                </svg>
+                                <div class="absolute inset-0 flex flex-col items-center justify-center pt-1">
+                                    <i class="fa-solid fa-bolt-lightning text-white/30 text-[10px] mb-[-2px] transition-all duration-500" id="achievement-icon"></i>
+                                    <span id="progress-percent" class="text-white text-[10px] font-black tracking-tighter">0%</span>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="h-8 sm:h-10 w-[1px] bg-white/20 shrink-0"></div>
                         <div class="flex gap-3 sm:gap-6">
                             <div class="flex flex-col items-center justify-center">
@@ -2853,14 +2889,37 @@
             const completedToday = tasks.filter(t => t.completed && isToday(t.archivedAt));
             const totalTasksToday = [...activeTasks, ...completedToday].length;
 
-            // Dashboard Progress
-            const progressCircle = document.getElementById('progress-circle');
+            // Dashboard Progress (Hex Core Logic)
+            const progressHex = document.getElementById('progress-hex');
             const progressPercentText = document.getElementById('progress-percent');
-            if (progressCircle && progressPercentText) {
+            const coreIcon = document.getElementById('achievement-icon');
+            const hexWrap = document.getElementById('hex-core-wrap');
+
+            if (progressHex && progressPercentText) {
                 const percent = totalTasksToday > 0 ? Math.round((completedToday.length / totalTasksToday) * 100) : 0;
-                const offset = 226.2 - (226.2 * percent / 100);
-                progressCircle.style.strokeDashoffset = offset;
+                
+                // Perimeter is approx 210 units
+                const perimeter = 210;
+                const offset = perimeter - (perimeter * percent / 100);
+                progressHex.style.strokeDashoffset = offset;
                 progressPercentText.innerText = `${percent}%`;
+
+                // Success State / Styling
+                if (percent === 100 && totalTasksToday > 0) {
+                    progressHex.style.stroke = 'url(#hex-grad-gold)';
+                    progressPercentText.classList.add('text-yellow-400');
+                    if (hexWrap) hexWrap.classList.add('hex-success-state');
+                    if (coreIcon) {
+                        coreIcon.className = 'fa-solid fa-trophy text-yellow-500 animate-bounce text-[10px] mb-[-2px]';
+                    }
+                } else {
+                    progressHex.style.stroke = 'url(#hex-grad)';
+                    progressPercentText.classList.remove('text-yellow-400');
+                    if (hexWrap) hexWrap.classList.remove('hex-success-state');
+                    if (coreIcon) {
+                        coreIcon.className = 'fa-solid fa-bolt-lightning text-white/30 text-[10px] mb-[-2px]';
+                    }
+                }
             }
 
             // Dashboard Date
@@ -3494,23 +3553,37 @@
         // Views & Subpages Flow
         // -------------------------
         function switchView(viewName) {
-            document.querySelectorAll('.view-section').forEach(el => {
-                el.classList.add('hidden');
-                el.classList.remove('block');
+            const views = document.querySelectorAll('.view-section');
+            const target = document.getElementById(`view-${viewName}`);
+            
+            if (!target) return;
+
+            // Show target FIRST to ensure something is always rendered
+            target.classList.remove('hidden');
+            target.classList.add('block');
+            
+            // Immediately hide other views
+            views.forEach(el => {
+                if (el !== target) {
+                    el.classList.add('hidden');
+                    el.classList.remove('block');
+                }
             });
 
-            const target = document.getElementById(`view-${viewName}`);
-            if (target) {
-                target.classList.remove('hidden');
-                target.classList.add('block');
-                target.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 300, easing: 'ease-out' });
-            }
+            // Smooth entrance for target
+            target.animate([
+                { opacity: 0, transform: 'translateY(10px)' }, 
+                { opacity: 1, transform: 'translateY(0)' }
+            ], { duration: 300, easing: 'ease-out' });
 
             // Header visibility logic
             const header = document.getElementById('main-header');
             if (viewName === 'dashboard') {
                 header.style.display = 'flex';
-                header.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300 });
+                // Trigger animation only if it wasn't already visible to avoid double animation flicker
+                if (header.style.opacity === "0" || !header.style.opacity) {
+                    header.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300 });
+                }
             } else {
                 header.style.display = 'none';
             }
